@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import {AccessControl} from "../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title Treasury
@@ -18,10 +18,10 @@ contract Treasury is AccessControl, ReentrancyGuard {
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
 
     // HTK token address (governance token to be burned)
-    address public immutable htkToken;
+    address public immutable HTK_TOKEN;
 
     // Saucerswap Router interface
-    ISaucerswapRouter public immutable saucerswapRouter;
+    ISaucerswapRouter public immutable SAUCERSWAP_ROUTER;
 
     // Events
     event Deposited(
@@ -77,8 +77,8 @@ contract Treasury is AccessControl, ReentrancyGuard {
         require(_admin != address(0), "Treasury: Invalid admin");
         require(_relay != address(0), "Treasury: Invalid relay");
 
-        htkToken = _htkToken;
-        saucerswapRouter = ISaucerswapRouter(_saucerswapRouter);
+        HTK_TOKEN = _htkToken;
+        SAUCERSWAP_ROUTER = ISaucerswapRouter(_saucerswapRouter);
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(DAO_ROLE, _admin);
@@ -137,7 +137,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         uint256 deadline
     ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
         require(tokenIn != address(0), "Treasury: Invalid token");
-        require(tokenIn != htkToken, "Treasury: Cannot swap HTK for HTK");
+        require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
         require(deadline >= block.timestamp, "Treasury: Expired deadline");
 
@@ -176,7 +176,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         uint256 deadline
     ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 htkReceived) {
         require(tokenIn != address(0), "Treasury: Invalid token");
-        require(tokenIn != htkToken, "Treasury: Cannot swap HTK for HTK");
+        require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
         require(deadline >= block.timestamp, "Treasury: Expired deadline");
 
@@ -202,7 +202,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
      * @param amount Amount of HTK to burn (0 = burn all)
      */
     function burn(uint256 amount) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
-        uint256 htkBalance = IERC20(htkToken).balanceOf(address(this));
+        uint256 htkBalance = IERC20(HTK_TOKEN).balanceOf(address(this));
 
         if (amount == 0) {
             burnedAmount = htkBalance;
@@ -256,18 +256,17 @@ contract Treasury is AccessControl, ReentrancyGuard {
         uint256 deadline
     ) private returns (uint256 htkReceived) {
         // Approve router to spend tokens
-        IERC20(tokenIn).safeApprove(address(saucerswapRouter), 0);
-        IERC20(tokenIn).safeApprove(address(saucerswapRouter), amountIn);
+        IERC20(tokenIn).forceApprove(address(SAUCERSWAP_ROUTER), amountIn);
 
         // Prepare swap path
         address[] memory path = new address[](2);
         path[0] = tokenIn;
-        path[1] = htkToken;
+        path[1] = HTK_TOKEN;
 
-        uint256 htkBefore = IERC20(htkToken).balanceOf(address(this));
+        uint256 htkBefore = IERC20(HTK_TOKEN).balanceOf(address(this));
 
         // Execute swap
-        saucerswapRouter.swapExactTokensForTokens(
+        SAUCERSWAP_ROUTER.swapExactTokensForTokens(
             amountIn,
             amountOutMin,
             path,
@@ -275,7 +274,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
             deadline
         );
 
-        uint256 htkAfter = IERC20(htkToken).balanceOf(address(this));
+        uint256 htkAfter = IERC20(HTK_TOKEN).balanceOf(address(this));
         htkReceived = htkAfter - htkBefore;
 
         require(htkReceived >= amountOutMin, "Treasury: Insufficient output");
@@ -290,7 +289,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         require(amount > 0, "Treasury: Zero burn amount");
 
         // Burn by sending to dead address
-        IERC20(htkToken).safeTransfer(address(0xdead), amount);
+        IERC20(HTK_TOKEN).safeTransfer(address(0xdead), amount);
 
         emit Burned(amount, msg.sender, block.timestamp);
 

@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "../src/Treasury.sol";
-import "../src/mocks/MockERC20.sol";
-import "../src/mocks/MockSaucerswapRouter.sol";
-import "../src/mocks/MockRelay.sol";
+import {Test} from "forge-std/Test.sol";
+import {Treasury} from "../src/Treasury.sol";
+import {MockERC20} from "../src/mocks/MockERC20.sol";
+import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
+import {MockRelay} from "../src/mocks/MockRelay.sol";
+import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IAccessControl} from "../lib/openzeppelin-contracts/contracts/access/IAccessControl.sol";
 
 contract TreasuryTest is Test {
+    using SafeERC20 for IERC20;
     Treasury public treasury;
     MockRelay public mockRelay;
     MockERC20 public htkToken;
@@ -103,9 +106,9 @@ contract TreasuryTest is Test {
 
     /* ============ Deployment Tests ============ */
 
-    function test_Deployment() public {
-        assertEq(treasury.htkToken(), address(htkToken));
-        assertEq(address(treasury.saucerswapRouter()), address(saucerswapRouter));
+    function test_Deployment() public view {
+        assertEq(treasury.HTK_TOKEN(), address(htkToken));
+        assertEq(address(treasury.SAUCERSWAP_ROUTER()), address(saucerswapRouter));
 
         bytes32 daoRole = treasury.DAO_ROLE();
         assertTrue(treasury.hasRole(daoRole, dao));
@@ -114,7 +117,8 @@ contract TreasuryTest is Test {
         assertTrue(treasury.hasRole(relayRole, address(mockRelay)));
     }
 
-    function testFail_DeployWithZeroHTKToken() public {
+    function test_RevertWhen_DeployWithZeroHTKToken() public {
+        vm.expectRevert(bytes("Treasury: Invalid HTK token"));
         new Treasury(
             address(0),
             address(saucerswapRouter),
@@ -123,7 +127,8 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_DeployWithZeroRouter() public {
+    function test_RevertWhen_DeployWithZeroRouter() public {
+        vm.expectRevert(bytes("Treasury: Invalid router"));
         new Treasury(
             address(htkToken),
             address(0),
@@ -132,7 +137,8 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_DeployWithZeroAdmin() public {
+    function test_RevertWhen_DeployWithZeroAdmin() public {
+        vm.expectRevert(bytes("Treasury: Invalid admin"));
         new Treasury(
             address(htkToken),
             address(saucerswapRouter),
@@ -141,7 +147,8 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_DeployWithZeroRelay() public {
+    function test_RevertWhen_DeployWithZeroRelay() public {
+        vm.expectRevert(bytes("Treasury: Invalid relay"));
         new Treasury(
             address(htkToken),
             address(saucerswapRouter),
@@ -178,13 +185,15 @@ contract TreasuryTest is Test {
         assertEq(treasury.getBalance(address(usdcToken)), 10_000e6 + amount);
     }
 
-    function testFail_DepositZeroAmount() public {
+    function test_RevertWhen_DepositZeroAmount() public {
         vm.prank(user1);
+        vm.expectRevert(bytes("Treasury: Zero amount"));
         treasury.deposit(address(usdcToken), 0);
     }
 
-    function testFail_DepositInvalidToken() public {
+    function test_RevertWhen_DepositInvalidToken() public {
         vm.prank(user1);
+        vm.expectRevert(bytes("Treasury: Invalid token"));
         treasury.deposit(address(0), 1000);
     }
 
@@ -227,28 +236,33 @@ contract TreasuryTest is Test {
         assertEq(treasury.getBalance(address(usdcToken)), 10_000e6 - amount);
     }
 
-    function testFail_WithdrawByNonDAO() public {
+    function test_RevertWhen_WithdrawByNonDAO() public {
         vm.prank(unauthorized);
+        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
         treasury.withdraw(address(usdcToken), user2, 1000e6);
     }
 
-    function testFail_WithdrawInsufficientBalance() public {
+    function test_RevertWhen_WithdrawInsufficientBalance() public {
         vm.prank(dao);
+        vm.expectRevert(bytes("Treasury: Insufficient balance"));
         treasury.withdraw(address(usdcToken), user2, 20_000e6);
     }
 
-    function testFail_WithdrawZeroAmount() public {
+    function test_RevertWhen_WithdrawZeroAmount() public {
         vm.prank(dao);
+        vm.expectRevert(bytes("Treasury: Zero amount"));
         treasury.withdraw(address(usdcToken), user2, 0);
     }
 
-    function testFail_WithdrawInvalidToken() public {
+    function test_RevertWhen_WithdrawInvalidToken() public {
         vm.prank(dao);
+        vm.expectRevert(bytes("Treasury: Invalid token"));
         treasury.withdraw(address(0), user2, 1000);
     }
 
-    function testFail_WithdrawInvalidRecipient() public {
+    function test_RevertWhen_WithdrawInvalidRecipient() public {
         vm.prank(dao);
+        vm.expectRevert(bytes("Treasury: Invalid recipient"));
         treasury.withdraw(address(usdcToken), address(0), 1000);
     }
 
@@ -256,66 +270,71 @@ contract TreasuryTest is Test {
 
     function test_BuybackAndBurn() public {
         uint256 buybackAmount = 1000e6;
-        uint256 expectedHTK = 2000e18; // 1000 USDC * 2 = 2000 HTK
+        uint256 expectedHtk = 2000e18; // 1000 USDC * 2 = 2000 HTK
         uint256 deadline = block.timestamp + 3600;
 
         vm.expectEmit(true, false, false, true);
         emit BuybackExecuted(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             address(mockRelay),
             block.timestamp
         );
 
         vm.expectEmit(false, false, false, true);
-        emit Burned(expectedHTK, address(mockRelay), block.timestamp);
+        emit Burned(expectedHtk, address(mockRelay), block.timestamp);
 
         mockRelay.executeBuybackAndBurn(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
 
         // Check HTK was burned (sent to dead address)
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHTK);
+        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
     }
 
     function testFuzz_BuybackAndBurn(uint256 amount) public {
         vm.assume(amount > 0 && amount <= 10_000e6);
 
-        uint256 expectedHTK = (amount * EXCHANGE_RATE) / 1e18;
+        // amount is in smallest units of USDC (6 decimals). Router computes
+        // amountOut = amountIn * EXCHANGE_RATE / 10^decimals(tokenIn).
+        // Since USDC has 6 decimals, divide by 1e6 here to match router logic.
+        uint256 expectedHtk = (amount * EXCHANGE_RATE) / 1e6;
         uint256 deadline = block.timestamp + 3600;
 
         mockRelay.executeBuybackAndBurn(
             address(usdcToken),
             amount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
 
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHTK);
+        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
     }
 
-    function testFail_BuybackAndBurnByNonRelay() public {
+    function test_RevertWhen_BuybackAndBurnByNonRelay() public {
         uint256 buybackAmount = 1000e6;
-        uint256 expectedHTK = 2000e18;
+        uint256 expectedHtk = 2000e18;
         uint256 deadline = block.timestamp + 3600;
 
         vm.prank(unauthorized);
+        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
         treasury.executeBuybackAndBurn(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
     }
 
-    function testFail_BuybackHTKForHTK() public {
+    function test_RevertWhen_BuybackHTKForHTK() public {
         uint256 buybackAmount = 1000e18;
         uint256 deadline = block.timestamp + 3600;
 
+        vm.expectRevert(bytes("Treasury: Cannot swap HTK for HTK"));
         mockRelay.executeBuybackAndBurn(
             address(htkToken),
             buybackAmount,
@@ -324,10 +343,11 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_BuybackExpiredDeadline() public {
+    function test_RevertWhen_BuybackExpiredDeadline() public {
         uint256 buybackAmount = 1000e6;
         uint256 deadline = block.timestamp - 1;
 
+        vm.expectRevert(bytes("Treasury: Expired deadline"));
         mockRelay.executeBuybackAndBurn(
             address(usdcToken),
             buybackAmount,
@@ -336,10 +356,11 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_BuybackInsufficientBalance() public {
+    function test_RevertWhen_BuybackInsufficientBalance() public {
         uint256 buybackAmount = 20_000e6;
         uint256 deadline = block.timestamp + 3600;
 
+        vm.expectRevert(bytes("Treasury: Insufficient balance"));
         mockRelay.executeBuybackAndBurn(
             address(usdcToken),
             buybackAmount,
@@ -350,16 +371,16 @@ contract TreasuryTest is Test {
 
     function test_BuybackWithoutBurn() public {
         uint256 buybackAmount = 1000e6;
-        uint256 expectedHTK = 2000e18;
+        uint256 expectedHtk = 2000e18;
         uint256 deadline = block.timestamp + 3600;
 
-        uint256 initialHTKBalance = treasury.getBalance(address(htkToken));
+        uint256 initialHtkBalance = treasury.getBalance(address(htkToken));
 
         vm.expectEmit(true, false, false, true);
         emit BuybackExecuted(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             address(mockRelay),
             block.timestamp
         );
@@ -367,40 +388,40 @@ contract TreasuryTest is Test {
         mockRelay.executeBuyback(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
 
         // HTK should be in treasury, not burned yet
-        assertEq(treasury.getBalance(address(htkToken)), initialHTKBalance + expectedHTK);
+        assertEq(treasury.getBalance(address(htkToken)), initialHtkBalance + expectedHtk);
     }
 
     function test_BurnAccumulatedHTK() public {
         // First buyback without burn
         uint256 buybackAmount = 1000e6;
-        uint256 expectedHTK = 2000e18;
+        uint256 expectedHtk = 2000e18;
         uint256 deadline = block.timestamp + 3600;
 
         mockRelay.executeBuyback(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
 
         // Now burn
         vm.expectEmit(false, false, false, true);
-        emit Burned(expectedHTK, address(mockRelay), block.timestamp);
+        emit Burned(expectedHtk, address(mockRelay), block.timestamp);
 
-        mockRelay.burn(expectedHTK);
+        mockRelay.burn(expectedHtk);
 
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHTK);
+        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
     }
 
     function test_BurnAllHTK() public {
         // Fund treasury with HTK
         uint256 htkAmount = 5000e18;
-        htkToken.transfer(address(treasury), htkAmount);
+        IERC20(address(htkToken)).safeTransfer(address(treasury), htkAmount);
 
         vm.expectEmit(false, false, false, true);
         emit Burned(htkAmount, address(mockRelay), block.timestamp);
@@ -426,26 +447,30 @@ contract TreasuryTest is Test {
         assertFalse(treasury.hasRole(relayRole, address(mockRelay)));
     }
 
-    function testFail_UpdateRelayByNonAdmin() public {
+    function test_RevertWhen_UpdateRelayByNonAdmin() public {
         vm.prank(unauthorized);
+        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
         treasury.updateRelay(address(mockRelay), user2);
     }
 
-    function testFail_UpdateRelaySameAddress() public {
+    function test_RevertWhen_UpdateRelaySameAddress() public {
         vm.prank(dao);
+        vm.expectRevert(bytes("Treasury: Same relay"));
         treasury.updateRelay(address(mockRelay), address(mockRelay));
     }
 
-    function testFail_UpdateRelayZeroAddress() public {
+    function test_RevertWhen_UpdateRelayZeroAddress() public {
         vm.prank(dao);
+        vm.expectRevert(bytes("Treasury: Invalid relay"));
         treasury.updateRelay(address(mockRelay), address(0));
     }
 
-    function testFail_UnauthorizedExecuteBuybackAndBurn() public {
+    function test_RevertWhen_UnauthorizedExecuteBuybackAndBurn() public {
         uint256 buybackAmount = 1000e6;
         uint256 deadline = block.timestamp + 3600;
 
         vm.prank(unauthorized);
+        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
         treasury.executeBuybackAndBurn(
             address(usdcToken),
             buybackAmount,
@@ -454,11 +479,12 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_UnauthorizedExecuteBuyback() public {
+    function test_RevertWhen_UnauthorizedExecuteBuyback() public {
         uint256 buybackAmount = 1000e6;
         uint256 deadline = block.timestamp + 3600;
 
         vm.prank(unauthorized);
+        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
         treasury.executeBuyback(
             address(usdcToken),
             buybackAmount,
@@ -467,8 +493,9 @@ contract TreasuryTest is Test {
         );
     }
 
-    function testFail_UnauthorizedBurn() public {
+    function test_RevertWhen_UnauthorizedBurn() public {
         vm.prank(unauthorized);
+        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
         treasury.burn(1000);
     }
 
@@ -484,20 +511,20 @@ contract TreasuryTest is Test {
 
         // 2. Relay executes buyback and burn
         uint256 buybackAmount = 3000e6;
-        uint256 expectedHTK = 6000e18;
+        uint256 expectedHtk = 6000e18;
         uint256 deadline = block.timestamp + 3600;
 
         mockRelay.executeBuybackAndBurn(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
 
         // 3. Verify final state
-        uint256 remainingUSDC = 12_000e6; // 10000 + 5000 - 3000
-        assertEq(treasury.getBalance(address(usdcToken)), remainingUSDC);
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHTK);
+        uint256 remainingUsdc = 12_000e6; // 10000 + 5000 - 3000
+        assertEq(treasury.getBalance(address(usdcToken)), remainingUsdc);
+        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
     }
 
     function test_MultipleBuybackOperations() public {
@@ -525,31 +552,31 @@ contract TreasuryTest is Test {
 
     function test_SeparateBuybackAndBurn() public {
         uint256 buybackAmount = 1000e6;
-        uint256 expectedHTK = 2000e18;
+        uint256 expectedHtk = 2000e18;
         uint256 deadline = block.timestamp + 3600;
 
         // Execute buyback
         mockRelay.executeBuyback(
             address(usdcToken),
             buybackAmount,
-            expectedHTK,
+            expectedHtk,
             deadline
         );
 
         // Verify HTK in treasury
-        assertEq(treasury.getBalance(address(htkToken)), expectedHTK);
+        assertEq(treasury.getBalance(address(htkToken)), expectedHtk);
 
         // Execute burn
-        mockRelay.burn(expectedHTK);
+        mockRelay.burn(expectedHtk);
 
         // Verify burned
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHTK);
+        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
         assertEq(treasury.getBalance(address(htkToken)), 0);
     }
 
     /* ============ View Function Tests ============ */
 
-    function test_GetBalance() public {
+    function test_GetBalance() public view {
         uint256 balance = treasury.getBalance(address(usdcToken));
         assertEq(balance, 10_000e6);
     }

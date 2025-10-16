@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20, IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Metadata} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**
  * @title MockSaucerswapRouter
@@ -49,8 +50,10 @@ contract MockSaucerswapRouter {
         uint256 rate = exchangeRates[tokenIn][tokenOut];
         require(rate > 0, "Router: No exchange rate set");
 
-        // Calculate output amount
-        uint256 amountOut = (amountIn * rate) / 1e18;
+        // Calculate output amount with tokenIn decimals normalization
+        uint8 inDecimals = IERC20Metadata(tokenIn).decimals();
+        uint256 denom = 10 ** uint256(inDecimals);
+        uint256 amountOut = (amountIn * rate) / denom;
         require(amountOut >= amountOutMin, "Router: Insufficient output");
 
         // Transfer tokens

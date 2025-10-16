@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
-import "../src/Treasury.sol";
-import "../src/mocks/MockERC20.sol";
-import "../src/mocks/MockSaucerswapRouter.sol";
-import "../src/mocks/MockRelay.sol";
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
+import {Treasury} from "../src/Treasury.sol";
+import {MockERC20} from "../src/mocks/MockERC20.sol";
+import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
+import {MockRelay} from "../src/mocks/MockRelay.sol";
+import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract DeployMocks is Script {
+    using SafeERC20 for IERC20;
     function run() external {
         console.log("=== Deploying Mock Contracts for Testing ===");
         console.log("Deployer:", msg.sender);
@@ -40,9 +43,9 @@ contract DeployMocks is Script {
         console.log("Saucerswap Router:", address(router));
 
         // Fund router with HTK
-        uint256 routerHTKSupply = 5_000_000e18; // 5M HTK
-        htkToken.mint(address(router), routerHTKSupply);
-        console.log("Funded router with", routerHTKSupply / 1e18, "HTK");
+        uint256 routerHtkSupply = 5_000_000e18; // 5M HTK
+        htkToken.mint(address(router), routerHtkSupply);
+        console.log("Funded router with", routerHtkSupply / 1e18, "HTK");
 
         // Set exchange rate (1 USDC = 2 HTK)
         uint256 exchangeRate = 2e18;
@@ -60,9 +63,9 @@ contract DeployMocks is Script {
         console.log("Treasury:", address(treasury));
 
         // Fund treasury with USDC
-        uint256 treasuryUSDC = 100_000e6; // 100k USDC
-        usdcToken.transfer(address(treasury), treasuryUSDC);
-        console.log("Funded treasury with", treasuryUSDC / 1e6, "USDC");
+        uint256 treasuryUsdc = 100_000e6; // 100k USDC
+        IERC20(address(usdcToken)).safeTransfer(address(treasury), treasuryUsdc);
+        console.log("Funded treasury with", treasuryUsdc / 1e6, "USDC");
 
         // 5. Deploy Mock Relay
         console.log("\n5. Deploying Mock Relay...");
@@ -85,19 +88,40 @@ contract DeployMocks is Script {
         console.log("Mock Relay:", address(mockRelay));
 
         // Save deployment info
+        _saveDeploymentInfo(
+            address(htkToken),
+            address(usdcToken),
+            address(router),
+            address(treasury),
+            address(mockRelay),
+            treasuryUsdc,
+            routerHtkSupply
+        );
+
+        console.log("\nMock deployment complete! Ready for testing.");
+    }
+    function _saveDeploymentInfo(
+        address htk,
+        address usdc,
+        address routerAddr,
+        address treasuryAddr,
+        address relayAddr,
+        uint256 treasuryUsdcAmount,
+        uint256 routerHtkAmount
+    ) internal {
         string memory deploymentInfo = string.concat(
             "{\n",
             '  "network": "', vm.toString(block.chainid), '",\n',
             '  "timestamp": "', vm.toString(block.timestamp), '",\n',
             '  "deployer": "', vm.toString(msg.sender), '",\n',
-            '  "htkToken": "', vm.toString(address(htkToken)), '",\n',
-            '  "usdcToken": "', vm.toString(address(usdcToken)), '",\n',
-            '  "saucerswapRouter": "', vm.toString(address(router)), '",\n',
-            '  "treasury": "', vm.toString(address(treasury)), '",\n',
-            '  "mockRelay": "', vm.toString(address(mockRelay)), '",\n',
+            '  "htkToken": "', vm.toString(htk), '",\n',
+            '  "usdcToken": "', vm.toString(usdc), '",\n',
+            '  "saucerswapRouter": "', vm.toString(routerAddr), '",\n',
+            '  "treasury": "', vm.toString(treasuryAddr), '",\n',
+            '  "mockRelay": "', vm.toString(relayAddr), '",\n',
             '  "exchangeRate": "2.0",\n',
-            '  "treasuryUSDC": "', vm.toString(treasuryUSDC / 1e6), '",\n',
-            '  "routerHTK": "', vm.toString(routerHTKSupply / 1e18), '"\n',
+            '  "treasuryUSDC": "', vm.toString(treasuryUsdcAmount / 1e6), '",\n',
+            '  "routerHTK": "', vm.toString(routerHtkAmount / 1e18), '"\n',
             "}"
         );
 
@@ -107,6 +131,5 @@ contract DeployMocks is Script {
         );
 
         console.log("\nDeployment info saved to deployments/ directory");
-        console.log("\nMock deployment complete! Ready for testing.");
     }
 }

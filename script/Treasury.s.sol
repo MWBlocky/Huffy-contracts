@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
-import "../src/Treasury.sol";
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
+import {Treasury} from "../src/Treasury.sol";
 
 contract DeployTreasury is Script {
     function run() external {
@@ -10,7 +11,7 @@ contract DeployTreasury is Script {
         address htkToken = vm.envAddress("HTK_TOKEN_ADDRESS");
         address saucerswapRouter = vm.envOr(
             "SAUCERSWAP_ROUTER",
-            address(0x00000000000000000000000000000000001a9b39) // Hedera Testnet Saucerswap Router
+            address(0x00000000000000000000000000000000001A9B39) // Hedera Testnet Saucerswap Router
         );
         address daoAdmin = vm.envOr("DAO_ADMIN_ADDRESS", msg.sender);
         address relay = vm.envOr("RELAY_ADDRESS", msg.sender);
@@ -40,8 +41,8 @@ contract DeployTreasury is Script {
 
         // Verify configuration
         console.log("\nVerifying deployment...");
-        console.log("HTK Token (from contract):", treasury.htkToken());
-        console.log("Router (from contract):", address(treasury.saucerswapRouter()));
+        console.log("HTK Token (from contract):", treasury.HTK_TOKEN());
+        console.log("Router (from contract):", address(treasury.SAUCERSWAP_ROUTER()));
 
         console.log("\n=== Next Steps ===");
         console.log("1. If relay is deployer, deploy Relay contract");
