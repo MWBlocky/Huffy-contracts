@@ -295,52 +295,6 @@ contract TreasuryTest is Test {
         mockRelay.executeBuybackAndBurn(address(usdcToken), buybackAmount, 0, deadline);
     }
 
-    function test_BuybackWithoutBurn() public {
-        uint256 buybackAmount = 1000e6;
-        uint256 expectedHtk = 2000e18;
-        uint256 deadline = block.timestamp + 3600;
-
-        uint256 initialHtkBalance = treasury.getBalance(address(htkToken));
-
-        vm.expectEmit(true, false, false, true);
-        emit BuybackExecuted(address(usdcToken), buybackAmount, expectedHtk, address(mockRelay), block.timestamp);
-
-        mockRelay.executeBuyback(address(usdcToken), buybackAmount, expectedHtk, deadline);
-
-        // HTK should be in treasury, not burned yet
-        assertEq(treasury.getBalance(address(htkToken)), initialHtkBalance + expectedHtk);
-    }
-
-    function test_BurnAccumulatedHTK() public {
-        // First buyback without burn
-        uint256 buybackAmount = 1000e6;
-        uint256 expectedHtk = 2000e18;
-        uint256 deadline = block.timestamp + 3600;
-
-        mockRelay.executeBuyback(address(usdcToken), buybackAmount, expectedHtk, deadline);
-
-        // Now burn
-        vm.expectEmit(false, false, false, true);
-        emit Burned(expectedHtk, address(mockRelay), block.timestamp);
-
-        mockRelay.burn(expectedHtk);
-
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
-    }
-
-    function test_BurnAllHTK() public {
-        // Fund treasury with HTK
-        uint256 htkAmount = 5000e18;
-        IERC20(address(htkToken)).safeTransfer(address(treasury), htkAmount);
-
-        vm.expectEmit(false, false, false, true);
-        emit Burned(htkAmount, address(mockRelay), block.timestamp);
-
-        mockRelay.burn(0); // 0 means burn all
-
-        assertEq(htkToken.balanceOf(address(0xdead)), htkAmount);
-    }
-
     /* ============ Access Control Tests ============ */
 
     function test_UpdateRelay() public {
@@ -443,25 +397,6 @@ contract TreasuryTest is Test {
 
         uint256 totalBurned = 6000e18; // (1000 + 2000) * 2
         assertEq(htkToken.balanceOf(address(0xdead)), totalBurned);
-    }
-
-    function test_SeparateBuybackAndBurn() public {
-        uint256 buybackAmount = 1000e6;
-        uint256 expectedHtk = 2000e18;
-        uint256 deadline = block.timestamp + 3600;
-
-        // Execute buyback
-        mockRelay.executeBuyback(address(usdcToken), buybackAmount, expectedHtk, deadline);
-
-        // Verify HTK in treasury
-        assertEq(treasury.getBalance(address(htkToken)), expectedHtk);
-
-        // Execute burn
-        mockRelay.burn(expectedHtk);
-
-        // Verify burned
-        assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
-        assertEq(treasury.getBalance(address(htkToken)), 0);
     }
 
     /* ============ View Function Tests ============ */

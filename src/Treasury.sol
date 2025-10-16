@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {AccessControl} from "../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import {ISaucerswapRouter} from "./interfaces/ISaucerswapRouter.sol";
 
 /**
  * @title Treasury
@@ -126,57 +127,6 @@ contract Treasury is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Execute buyback without immediate burn (for flexibility)
-     * @dev Only callable by Relay contract
-     * @param tokenIn Address of the token to swap for HTK
-     * @param amountIn Amount of tokenIn to swap
-     * @param amountOutMin Minimum amount of HTK to receive
-     * @param deadline Deadline for the swap
-     */
-    function executeBuyback(address tokenIn, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
-        external
-        onlyRole(RELAY_ROLE)
-        nonReentrant
-        returns (uint256 htkReceived)
-    {
-        require(tokenIn != address(0), "Treasury: Invalid token");
-        require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
-        require(amountIn > 0, "Treasury: Zero amount");
-        require(deadline >= block.timestamp, "Treasury: Expired deadline");
-
-        uint256 balance = IERC20(tokenIn).balanceOf(address(this));
-        require(balance >= amountIn, "Treasury: Insufficient balance");
-
-        htkReceived = _buyback(tokenIn, amountIn, amountOutMin, deadline);
-
-        emit BuybackExecuted(tokenIn, amountIn, htkReceived, msg.sender, block.timestamp);
-
-        return htkReceived;
-    }
-
-    /**
-     * @notice Burn accumulated HTK tokens
-     * @dev Only callable by Relay contract
-     * @param amount Amount of HTK to burn (0 = burn all)
-     */
-    function burn(uint256 amount) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
-        uint256 htkBalance = IERC20(HTK_TOKEN).balanceOf(address(this));
-
-        if (amount == 0) {
-            burnedAmount = htkBalance;
-        } else {
-            require(htkBalance >= amount, "Treasury: Insufficient HTK balance");
-            burnedAmount = amount;
-        }
-
-        require(burnedAmount > 0, "Treasury: Nothing to burn");
-
-        burnedAmount = _burn(burnedAmount);
-
-        return burnedAmount;
-    }
-
-    /**
      * @notice Get token balance in treasury
      * @param token Address of the token
      * @return balance Token balance
@@ -242,19 +192,4 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
         return amount;
     }
-}
-
-/**
- * @notice Minimal Saucerswap Router interface
- * https://hashscan.io/mainnet/contract/0.0.3045981/abi
- * 12. function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts) NONPAYABLE 0x38ed1739
- */
-interface ISaucerswapRouter {
-    function swapExactTokensForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
 }
