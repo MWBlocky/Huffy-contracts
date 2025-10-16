@@ -56,12 +56,13 @@ contract TreasuryTest is Test {
         saucerswapRouter = new MockSaucerswapRouter();
 
         // Deploy Treasury
-        treasury = new Treasury(
-            address(htkToken),
-            address(saucerswapRouter),
-            dao,
-            owner // Initially use owner as relay
-        );
+        treasury =
+            new Treasury(
+                address(htkToken),
+                address(saucerswapRouter),
+                dao,
+                owner // Initially use owner as relay
+            );
 
         // Mint tokens
         htkToken.mint(owner, INITIAL_SUPPLY);
