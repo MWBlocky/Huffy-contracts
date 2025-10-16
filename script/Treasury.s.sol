@@ -27,12 +27,7 @@ contract DeployTreasury is Script {
 
         vm.startBroadcast();
 
-        Treasury treasury = new Treasury(
-            htkToken,
-            saucerswapRouter,
-            daoAdmin,
-            relay
-        );
+        Treasury treasury = new Treasury(htkToken, saucerswapRouter, daoAdmin, relay);
 
         vm.stopBroadcast();
 
@@ -54,20 +49,31 @@ contract DeployTreasury is Script {
         string memory deploymentInfo = string.concat(
             "{\n",
             '  "network": "hedera-testnet",\n',
-            '  "timestamp": "', vm.toString(block.timestamp), '",\n',
-            '  "deployer": "', vm.toString(msg.sender), '",\n',
-            '  "treasury": "', vm.toString(address(treasury)), '",\n',
-            '  "htkToken": "', vm.toString(htkToken), '",\n',
-            '  "saucerswapRouter": "', vm.toString(saucerswapRouter), '",\n',
-            '  "daoAdmin": "', vm.toString(daoAdmin), '",\n',
-            '  "relay": "', vm.toString(relay), '"\n',
+            '  "timestamp": "',
+            vm.toString(block.timestamp),
+            '",\n',
+            '  "deployer": "',
+            vm.toString(msg.sender),
+            '",\n',
+            '  "treasury": "',
+            vm.toString(address(treasury)),
+            '",\n',
+            '  "htkToken": "',
+            vm.toString(htkToken),
+            '",\n',
+            '  "saucerswapRouter": "',
+            vm.toString(saucerswapRouter),
+            '",\n',
+            '  "daoAdmin": "',
+            vm.toString(daoAdmin),
+            '",\n',
+            '  "relay": "',
+            vm.toString(relay),
+            '"\n',
             "}"
         );
 
-        vm.writeFile(
-            string.concat("deployments/treasury-", vm.toString(block.timestamp), ".json"),
-            deploymentInfo
-        );
+        vm.writeFile(string.concat("deployments/treasury-", vm.toString(block.timestamp), ".json"), deploymentInfo);
 
         console.log("\nDeployment info saved to deployments/ directory");
     }

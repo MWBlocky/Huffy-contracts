@@ -24,40 +24,19 @@ contract Treasury is AccessControl, ReentrancyGuard {
     ISaucerswapRouter public immutable SAUCERSWAP_ROUTER;
 
     // Events
-    event Deposited(
-        address indexed token,
-        address indexed depositor,
-        uint256 amount,
-        uint256 timestamp
-    );
+    event Deposited(address indexed token, address indexed depositor, uint256 amount, uint256 timestamp);
 
     event Withdrawn(
-        address indexed token,
-        address indexed recipient,
-        uint256 amount,
-        address indexed initiator,
-        uint256 timestamp
+        address indexed token, address indexed recipient, uint256 amount, address indexed initiator, uint256 timestamp
     );
 
     event BuybackExecuted(
-        address indexed tokenIn,
-        uint256 amountIn,
-        uint256 htkReceived,
-        address indexed initiator,
-        uint256 timestamp
+        address indexed tokenIn, uint256 amountIn, uint256 htkReceived, address indexed initiator, uint256 timestamp
     );
 
-    event Burned(
-        uint256 amount,
-        address indexed initiator,
-        uint256 timestamp
-    );
+    event Burned(uint256 amount, address indexed initiator, uint256 timestamp);
 
-    event RelayUpdated(
-        address indexed oldRelay,
-        address indexed newRelay,
-        uint256 timestamp
-    );
+    event RelayUpdated(address indexed oldRelay, address indexed newRelay, uint256 timestamp);
 
     /**
      * @notice Constructor to initialize the Treasury
@@ -66,12 +45,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
      * @param _admin Address of the admin (DAO multisig)
      * @param _relay Address of the Relay contract
      */
-    constructor(
-        address _htkToken,
-        address _saucerswapRouter,
-        address _admin,
-        address _relay
-    ) {
+    constructor(address _htkToken, address _saucerswapRouter, address _admin, address _relay) {
         require(_htkToken != address(0), "Treasury: Invalid HTK token");
         require(_saucerswapRouter != address(0), "Treasury: Invalid router");
         require(_admin != address(0), "Treasury: Invalid admin");
@@ -105,11 +79,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
      * @param recipient Address to receive the tokens
      * @param amount Amount of tokens to withdraw
      */
-    function withdraw(
-        address token,
-        address recipient,
-        uint256 amount
-    ) external onlyRole(DAO_ROLE) nonReentrant {
+    function withdraw(address token, address recipient, uint256 amount) external onlyRole(DAO_ROLE) nonReentrant {
         require(token != address(0), "Treasury: Invalid token");
         require(recipient != address(0), "Treasury: Invalid recipient");
         require(amount > 0, "Treasury: Zero amount");
@@ -130,12 +100,12 @@ contract Treasury is AccessControl, ReentrancyGuard {
      * @param amountOutMin Minimum amount of HTK to receive
      * @param deadline Deadline for the swap
      */
-    function executeBuybackAndBurn(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        uint256 deadline
-    ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
+    function executeBuybackAndBurn(address tokenIn, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
+        external
+        onlyRole(RELAY_ROLE)
+        nonReentrant
+        returns (uint256 burnedAmount)
+    {
         require(tokenIn != address(0), "Treasury: Invalid token");
         require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
@@ -147,13 +117,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         // Execute buyback
         uint256 htkReceived = _buyback(tokenIn, amountIn, amountOutMin, deadline);
 
-        emit BuybackExecuted(
-            tokenIn,
-            amountIn,
-            htkReceived,
-            msg.sender,
-            block.timestamp
-        );
+        emit BuybackExecuted(tokenIn, amountIn, htkReceived, msg.sender, block.timestamp);
 
         // Burn HTK
         burnedAmount = _burn(htkReceived);
@@ -169,12 +133,12 @@ contract Treasury is AccessControl, ReentrancyGuard {
      * @param amountOutMin Minimum amount of HTK to receive
      * @param deadline Deadline for the swap
      */
-    function executeBuyback(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        uint256 deadline
-    ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 htkReceived) {
+    function executeBuyback(address tokenIn, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
+        external
+        onlyRole(RELAY_ROLE)
+        nonReentrant
+        returns (uint256 htkReceived)
+    {
         require(tokenIn != address(0), "Treasury: Invalid token");
         require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
@@ -185,13 +149,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
         htkReceived = _buyback(tokenIn, amountIn, amountOutMin, deadline);
 
-        emit BuybackExecuted(
-            tokenIn,
-            amountIn,
-            htkReceived,
-            msg.sender,
-            block.timestamp
-        );
+        emit BuybackExecuted(tokenIn, amountIn, htkReceived, msg.sender, block.timestamp);
 
         return htkReceived;
     }
@@ -233,10 +191,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
      * @param oldRelay Address of old relay to revoke
      * @param newRelay Address of new relay to grant
      */
-    function updateRelay(address oldRelay, address newRelay)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function updateRelay(address oldRelay, address newRelay) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(newRelay != address(0), "Treasury: Invalid relay");
         require(oldRelay != newRelay, "Treasury: Same relay");
 
@@ -249,12 +204,10 @@ contract Treasury is AccessControl, ReentrancyGuard {
     /**
      * @dev Internal function to execute buyback via Saucerswap
      */
-    function _buyback(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        uint256 deadline
-    ) private returns (uint256 htkReceived) {
+    function _buyback(address tokenIn, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
+        private
+        returns (uint256 htkReceived)
+    {
         // Approve router to spend tokens
         IERC20(tokenIn).forceApprove(address(SAUCERSWAP_ROUTER), amountIn);
 
@@ -266,13 +219,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         uint256 htkBefore = IERC20(HTK_TOKEN).balanceOf(address(this));
 
         // Execute swap
-        SAUCERSWAP_ROUTER.swapExactTokensForTokens(
-            amountIn,
-            amountOutMin,
-            path,
-            address(this),
-            deadline
-        );
+        SAUCERSWAP_ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), deadline);
 
         uint256 htkAfter = IERC20(HTK_TOKEN).balanceOf(address(this));
         htkReceived = htkAfter - htkBefore;

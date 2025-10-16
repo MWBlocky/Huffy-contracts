@@ -22,11 +22,7 @@ contract MockSaucerswapRouter {
      * @param tokenOut Output token
      * @param rate Exchange rate (scaled by 1e18)
      */
-    function setExchangeRate(
-        address tokenIn,
-        address tokenOut,
-        uint256 rate
-    ) external {
+    function setExchangeRate(address tokenIn, address tokenOut, uint256 rate) external {
         exchangeRates[tokenIn][tokenOut] = rate;
         emit ExchangeRateSet(tokenIn, tokenOut, rate);
     }
