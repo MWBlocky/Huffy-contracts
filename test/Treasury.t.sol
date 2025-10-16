@@ -202,12 +202,6 @@ contract TreasuryTest is Test {
         assertEq(treasury.getBalance(address(usdcToken)), 10_000e6 - amount);
     }
 
-    //    function test_RevertWhen_WithdrawByNonDAO() public {
-    //        vm.prank(unauthorized);
-    //        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
-    //        treasury.withdraw(address(usdcToken), user2, 1000e6);
-    //    }
-
     function test_RevertWhen_WithdrawInsufficientBalance() public {
         vm.prank(dao);
         vm.expectRevert(bytes("Treasury: Insufficient balance"));
@@ -265,21 +259,6 @@ contract TreasuryTest is Test {
         assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
     }
 
-    //    function test_RevertWhen_BuybackAndBurnByNonRelay() public {
-    //        uint256 buybackAmount = 1000e6;
-    //        uint256 expectedHtk = 2000e18;
-    //        uint256 deadline = block.timestamp + 3600;
-    //
-    //        vm.prank(unauthorized);
-    //        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
-    //        treasury.executeBuybackAndBurn(
-    //            address(usdcToken),
-    //            buybackAmount,
-    //            expectedHtk,
-    //            deadline
-    //        );
-    //    }
-
     function test_RevertWhen_BuybackHTKForHTK() public {
         uint256 buybackAmount = 1000e18;
         uint256 deadline = block.timestamp + 3600;
@@ -320,12 +299,6 @@ contract TreasuryTest is Test {
         assertFalse(treasury.hasRole(relayRole, address(mockRelay)));
     }
 
-    //    function test_RevertWhen_UpdateRelayByNonAdmin() public {
-    //        vm.prank(unauthorized);
-    //        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
-    //        treasury.updateRelay(address(mockRelay), user2);
-    //    }
-
     function test_RevertWhen_UpdateRelaySameAddress() public {
         vm.prank(dao);
         vm.expectRevert(bytes("Treasury: Same relay"));
@@ -337,40 +310,6 @@ contract TreasuryTest is Test {
         vm.expectRevert(bytes("Treasury: Invalid relay"));
         treasury.updateRelay(address(mockRelay), address(0));
     }
-
-    //    function test_RevertWhen_UnauthorizedExecuteBuybackAndBurn() public {
-    //        uint256 buybackAmount = 1000e6;
-    //        uint256 deadline = block.timestamp + 3600;
-    //
-    //        vm.prank(unauthorized);
-    //        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
-    //        treasury.executeBuybackAndBurn(
-    //            address(usdcToken),
-    //            buybackAmount,
-    //            0,
-    //            deadline
-    //        );
-    //    }
-
-    //    function test_RevertWhen_UnauthorizedExecuteBuyback() public {
-    //        uint256 buybackAmount = 1000e6;
-    //        uint256 deadline = block.timestamp + 3600;
-    //
-    //        vm.prank(unauthorized);
-    //        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
-    //        treasury.executeBuyback(
-    //            address(usdcToken),
-    //            buybackAmount,
-    //            0,
-    //            deadline
-    //        );
-    //    }
-
-    //    function test_RevertWhen_UnauthorizedBurn() public {
-    //        vm.prank(unauthorized);
-    //        vm.expectRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
-    //        treasury.burn(1000);
-    //    }
 
     /* ============ Integration Tests ============ */
 
