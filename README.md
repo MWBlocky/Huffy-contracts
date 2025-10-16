@@ -10,6 +10,10 @@ Important context from the code:
 - Router interface: uses `swapExactTokensForTokens` as per Saucerswap.
 - Mocks: `MockERC20`, `MockSaucerswapRouter` (with settable exchange rates), `MockDAO` (acts as DAO admin), and `MockRelay` (to invoke Treasury methods).
 
+Important script roles:
+- script/DeployMocks.s.sol: Deploys a full testing environment on testnet, including mocks AND a Treasury instance wired to the mock router. Use this to prepare contracts and addresses for end-to-end testing.
+- script/Treasury.s.sol: Production deployment script for the real Treasury on testnet/mainnet with your real token/router/admin/relay settings.
+
 ## Prerequisites
 
 - Foundry installed (forge, cast)
@@ -32,7 +36,7 @@ RELAY_ADDRESS=0xYourRelayEvmAddress   # can be your deployer for initial testing
 
 Note: The Treasury deployment script uses a default Saucerswap Testnet router address if `SAUCERSWAP_ROUTER` isn’t provided. You can override via env var if needed.
 
-## 1) Deploy Mocks to Hedera Testnet (optional, for testing)
+## 1) Deploy Mocks to Hedera Testnet (testing environment preparation)
 
 If you don’t have real tokens or prefer a fully controlled environment on testnet, deploy mocks. This will deploy:
 - Mock HTK (18 decimals)
@@ -57,7 +61,7 @@ Keep handy:
 - Treasury address
 - Mock Relay address (has the relay role on Treasury)
 
-## 2) Deploy the real Treasury on Hedera Testnet
+## 2) Deploy the real Treasury on Hedera Testnet (production deployment script)
 
 Use an existing HTK token and the testnet Saucerswap router (or your own), set DAO and Relay addresses.
 
