@@ -37,6 +37,15 @@ contract TreasuryTest is Test {
         address indexed tokenIn, uint256 amountIn, uint256 htkReceived, address indexed initiator, uint256 timestamp
     );
 
+    event SwapExecuted(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address indexed initiator,
+        uint256 timestamp
+    );
+
     event Burned(uint256 amount, address indexed initiator, uint256 timestamp);
 
     event RelayUpdated(address indexed oldRelay, address indexed newRelay, uint256 timestamp);
@@ -410,5 +419,68 @@ contract TreasuryTest is Test {
         MockERC20 newToken = new MockERC20("New Token", "NEW", 18);
         uint256 balance = treasury.getBalance(address(newToken));
         assertEq(balance, 0);
+    }
+
+    /* ============ Swap Tests ============ */
+
+    function test_Swap_USDCToHTK() public {
+        uint256 amountIn = 1000e6;
+        uint256 expectedOut = 2000e18; // 1000 USDC * 2 = 2000 HTK
+        uint256 deadline = block.timestamp + 3600;
+
+        vm.expectEmit(true, true, true, true);
+        emit SwapExecuted(
+            address(usdcToken), address(htkToken), amountIn, expectedOut, address(mockRelay), block.timestamp
+        );
+
+        uint256 htkBefore = htkToken.balanceOf(address(treasury));
+        uint256 ret = mockRelay.executeSwap(address(usdcToken), address(htkToken), amountIn, expectedOut, deadline);
+        uint256 htkAfter = htkToken.balanceOf(address(treasury));
+
+        assertEq(ret, expectedOut);
+        assertEq(htkAfter - htkBefore, expectedOut);
+        assertEq(htkToken.balanceOf(address(0xdead)), 0);
+    }
+
+    function testFuzz_Swap_USDCToHTK(uint256 amount) public {
+        vm.assume(amount > 0 && amount <= 10_000e6);
+        uint256 expectedOut = (amount * EXCHANGE_RATE) / 1e6;
+        uint256 deadline = block.timestamp + 3600;
+
+        uint256 outBefore = htkToken.balanceOf(address(treasury));
+        uint256 ret = mockRelay.executeSwap(address(usdcToken), address(htkToken), amount, expectedOut, deadline);
+        uint256 outAfter = htkToken.balanceOf(address(treasury));
+
+        assertEq(ret, expectedOut);
+        assertEq(outAfter - outBefore, expectedOut);
+        assertEq(htkToken.balanceOf(address(0xdead)), 0);
+    }
+
+    function test_RevertWhen_SwapSameToken() public {
+        uint256 amountIn = 100e6;
+        uint256 deadline = block.timestamp + 3600;
+        vm.expectRevert(bytes("Treasury: Same token"));
+        mockRelay.executeSwap(address(usdcToken), address(usdcToken), amountIn, 0, deadline);
+    }
+
+    function test_RevertWhen_SwapExpiredDeadline() public {
+        uint256 amountIn = 100e6;
+        uint256 deadline = block.timestamp - 1;
+        vm.expectRevert(bytes("Treasury: Expired deadline"));
+        mockRelay.executeSwap(address(usdcToken), address(htkToken), amountIn, 0, deadline);
+    }
+
+    function test_RevertWhen_SwapInsufficientBalance() public {
+        uint256 amountIn = 20_000e6;
+        uint256 deadline = block.timestamp + 3600;
+        vm.expectRevert(bytes("Treasury: Insufficient balance"));
+        mockRelay.executeSwap(address(usdcToken), address(htkToken), amountIn, 0, deadline);
+    }
+
+    function test_RevertWhen_SwapInvalidToken() public {
+        uint256 amountIn = 1;
+        uint256 deadline = block.timestamp + 3600;
+        vm.expectRevert(bytes("Treasury: Invalid token"));
+        mockRelay.executeSwap(address(0), address(htkToken), amountIn, 0, deadline);
     }
 }

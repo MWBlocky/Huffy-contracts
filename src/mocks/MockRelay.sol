@@ -21,4 +21,11 @@ contract MockRelay {
     {
         return treasury.executeBuybackAndBurn(tokenIn, amountIn, amountOutMin, deadline);
     }
+
+    function executeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
+        external
+        returns (uint256)
+    {
+        return treasury.executeSwap(tokenIn, tokenOut, amountIn, amountOutMin, deadline);
+    }
 }

@@ -33,48 +33,5 @@ contract DeployTreasury is Script {
 
         console.log("\n=== Deployment Complete ===");
         console.log("Treasury deployed at:", address(treasury));
-
-        // Verify configuration
-        console.log("\nVerifying deployment...");
-        console.log("HTK Token (from contract):", treasury.HTK_TOKEN());
-        console.log("Router (from contract):", address(treasury.SAUCERSWAP_ROUTER()));
-
-        console.log("\n=== Next Steps ===");
-        console.log("1. If relay is deployer, deploy Relay contract");
-        console.log("2. Call treasury.updateRelay(oldRelay, newRelay) from DAO admin");
-        console.log("3. Fund the treasury with tokens using deposit()");
-        console.log("4. Verify contract on Hedera Explorer");
-
-        // Save deployment info
-        string memory deploymentInfo = string.concat(
-            "{\n",
-            '  "network": "hedera-testnet",\n',
-            '  "timestamp": "',
-            vm.toString(block.timestamp),
-            '",\n',
-            '  "deployer": "',
-            vm.toString(msg.sender),
-            '",\n',
-            '  "treasury": "',
-            vm.toString(address(treasury)),
-            '",\n',
-            '  "htkToken": "',
-            vm.toString(htkToken),
-            '",\n',
-            '  "saucerswapRouter": "',
-            vm.toString(saucerswapRouter),
-            '",\n',
-            '  "daoAdmin": "',
-            vm.toString(daoAdmin),
-            '",\n',
-            '  "relay": "',
-            vm.toString(relay),
-            '"\n',
-            "}"
-        );
-
-        vm.writeFile(string.concat("deployments/treasury-", vm.toString(block.timestamp), ".json"), deploymentInfo);
-
-        console.log("\nDeployment info saved to deployments/ directory");
     }
 }

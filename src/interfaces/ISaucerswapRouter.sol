@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @notice Minimal Saucerswap Router interface
+ * @notice Saucerswap Router interface
  * https://hashscan.io/mainnet/contract/0.0.3045981/abi
  * 12. function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts) NONPAYABLE 0x38ed1739
  */

@@ -7,6 +7,7 @@ import {Treasury} from "../src/Treasury.sol";
 import {MockERC20} from "../src/mocks/MockERC20.sol";
 import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
 import {MockRelay} from "../src/mocks/MockRelay.sol";
+import {MockDAO} from "../src/mocks/MockDAO.sol";
 import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract DeployMocks is Script {
@@ -53,13 +54,18 @@ contract DeployMocks is Script {
         router.setExchangeRate(address(usdcToken), address(htkToken), exchangeRate);
         console.log("Set exchange rate: 1 USDC = 2 HTK");
 
-        // 4. Deploy Treasury
-        console.log("\n4. Deploying Treasury...");
+        // 4. Deploy Mock DAO (to serve as DAO admin address)
+        console.log("\n4. Deploying Mock DAO (admin)...");
+        MockDAO mockDao = new MockDAO();
+        console.log("Mock DAO:", address(mockDao));
+
+        // 5. Deploy Treasury with MockDAO as admin and deployer as temporary relay
+        console.log("\n5. Deploying Treasury...");
         Treasury treasury = new Treasury(
             address(htkToken),
             address(router),
-            msg.sender, // DAO admin
-            msg.sender // Temporary relay
+            address(mockDao), // DAO admin (MockDAO)
+            msg.sender // Temporary relay (deployer)
         );
         console.log("Treasury:", address(treasury));
 
@@ -68,15 +74,16 @@ contract DeployMocks is Script {
         IERC20(address(usdcToken)).safeTransfer(address(treasury), treasuryUsdc);
         console.log("Funded treasury with", treasuryUsdc / 1e6, "USDC");
 
-        // 5. Deploy Mock Relay
-        console.log("\n5. Deploying Mock Relay...");
+        // 6. Deploy Mock Relay
+        console.log("\n6. Deploying Mock Relay...");
         MockRelay mockRelay = new MockRelay(address(treasury));
         console.log("Mock Relay:", address(mockRelay));
 
-        // Update relay in treasury
-        console.log("\n6. Updating Relay in Treasury...");
-        treasury.updateRelay(msg.sender, address(mockRelay));
-        console.log("Relay updated in Treasury");
+        // 7. Configure MockDAO to point at Treasury and update relay inside Treasury via DAO
+        console.log("\n7. Configuring MockDAO and updating Relay in Treasury via DAO...");
+        mockDao.setTreasury(address(treasury));
+        mockDao.updateRelay(msg.sender, address(mockRelay));
+        console.log("Relay updated in Treasury by MockDAO");
 
         vm.stopBroadcast();
 
@@ -86,69 +93,7 @@ contract DeployMocks is Script {
         console.log("USDC Token:", address(usdcToken));
         console.log("Saucerswap Router:", address(router));
         console.log("Treasury:", address(treasury));
+        console.log("Mock DAO:", address(mockDao));
         console.log("Mock Relay:", address(mockRelay));
-
-        // Save deployment info
-        _saveDeploymentInfo(
-            address(htkToken),
-            address(usdcToken),
-            address(router),
-            address(treasury),
-            address(mockRelay),
-            treasuryUsdc,
-            routerHtkSupply
-        );
-
-        console.log("\nMock deployment complete! Ready for testing.");
-    }
-
-    function _saveDeploymentInfo(
-        address htk,
-        address usdc,
-        address routerAddr,
-        address treasuryAddr,
-        address relayAddr,
-        uint256 treasuryUsdcAmount,
-        uint256 routerHtkAmount
-    ) internal {
-        string memory deploymentInfo = string.concat(
-            "{\n",
-            '  "network": "',
-            vm.toString(block.chainid),
-            '",\n',
-            '  "timestamp": "',
-            vm.toString(block.timestamp),
-            '",\n',
-            '  "deployer": "',
-            vm.toString(msg.sender),
-            '",\n',
-            '  "htkToken": "',
-            vm.toString(htk),
-            '",\n',
-            '  "usdcToken": "',
-            vm.toString(usdc),
-            '",\n',
-            '  "saucerswapRouter": "',
-            vm.toString(routerAddr),
-            '",\n',
-            '  "treasury": "',
-            vm.toString(treasuryAddr),
-            '",\n',
-            '  "mockRelay": "',
-            vm.toString(relayAddr),
-            '",\n',
-            '  "exchangeRate": "2.0",\n',
-            '  "treasuryUSDC": "',
-            vm.toString(treasuryUsdcAmount / 1e6),
-            '",\n',
-            '  "routerHTK": "',
-            vm.toString(routerHtkAmount / 1e18),
-            '"\n',
-            "}"
-        );
-
-        vm.writeFile(string.concat("deployments/mocks-", vm.toString(block.timestamp), ".json"), deploymentInfo);
-
-        console.log("\nDeployment info saved to deployments/ directory");
     }
 }

@@ -35,6 +35,15 @@ contract Treasury is AccessControl, ReentrancyGuard {
         address indexed tokenIn, uint256 amountIn, uint256 htkReceived, address indexed initiator, uint256 timestamp
     );
 
+    event SwapExecuted(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address indexed initiator,
+        uint256 timestamp
+    );
+
     event Burned(uint256 amount, address indexed initiator, uint256 timestamp);
 
     event RelayUpdated(address indexed oldRelay, address indexed newRelay, uint256 timestamp);
@@ -124,6 +133,53 @@ contract Treasury is AccessControl, ReentrancyGuard {
         burnedAmount = _burn(htkReceived);
 
         return burnedAmount;
+    }
+
+    /**
+     * @notice Execute a generic token swap via Saucerswap without burning
+     * @dev Only callable by Relay contract. Swaps tokenIn to tokenOut and keeps proceeds in Treasury.
+     * @param tokenIn Address of the token to swap from
+     * @param tokenOut Address of the token to receive
+     * @param amountIn Amount of tokenIn to swap
+     * @param amountOutMin Minimum amount of tokenOut to receive
+     * @param deadline Deadline for the swap
+     * @return amountReceived Actual amount of tokenOut received
+     */
+    function executeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
+        external
+        onlyRole(RELAY_ROLE)
+        nonReentrant
+        returns (uint256 amountReceived)
+    {
+        require(tokenIn != address(0) && tokenOut != address(0), "Treasury: Invalid token");
+        require(tokenIn != tokenOut, "Treasury: Same token");
+        require(amountIn > 0, "Treasury: Zero amount");
+        require(deadline >= block.timestamp, "Treasury: Expired deadline");
+
+        uint256 balanceIn = IERC20(tokenIn).balanceOf(address(this));
+        require(balanceIn >= amountIn, "Treasury: Insufficient balance");
+
+        // Approve router to spend tokenIn
+        IERC20(tokenIn).forceApprove(address(SAUCERSWAP_ROUTER), amountIn);
+
+        // Build path [tokenIn, tokenOut]
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+
+        uint256 outBefore = IERC20(tokenOut).balanceOf(address(this));
+
+        // Execute swap
+        SAUCERSWAP_ROUTER.swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), deadline);
+
+        uint256 outAfter = IERC20(tokenOut).balanceOf(address(this));
+        amountReceived = outAfter - outBefore;
+
+        require(amountReceived >= amountOutMin, "Treasury: Insufficient output");
+
+        emit SwapExecuted(tokenIn, tokenOut, amountIn, amountReceived, msg.sender, block.timestamp);
+
+        return amountReceived;
     }
 
     /**
