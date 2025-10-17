@@ -19,8 +19,12 @@ contract MockDAO {
     event DaoRelayUpdate(address indexed oldRelay, address indexed newRelay, address indexed caller);
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "MockDAO: Not owner");
+        _onlyOwner();
         _;
+    }
+
+    function _onlyOwner() internal view {
+        require(msg.sender == owner, "MockDAO: Not owner");
     }
 
     constructor() {

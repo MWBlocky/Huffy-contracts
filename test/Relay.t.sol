@@ -7,7 +7,6 @@ import {PairWhitelist} from "../src/PairWhitelist.sol";
 import {Treasury} from "../src/Treasury.sol";
 import {MockERC20} from "../src/mocks/MockERC20.sol";
 import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
-import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract RelayTest is Test {
     Relay public relay;
@@ -105,6 +104,7 @@ contract RelayTest is Test {
         relay = new Relay(
             address(pairWhitelist),
             address(treasury),
+            address(router),
             dao,
             initialTraders,
             MAX_TRADE_BPS,
@@ -133,8 +133,8 @@ contract RelayTest is Test {
     /* ============ Deployment Tests ============ */
 
     function test_Deployment() public view {
-        assertEq(address(relay.pairWhitelist()), address(pairWhitelist));
-        assertEq(address(relay.treasury()), address(treasury));
+        assertEq(address(relay.PAIR_WHITELIST()), address(pairWhitelist));
+        assertEq(address(relay.TREASURY()), address(treasury));
         assertEq(relay.maxTradeBps(), MAX_TRADE_BPS);
         assertEq(relay.maxSlippageBps(), MAX_SLIPPAGE_BPS);
         assertEq(relay.tradeCooldownSec(), TRADE_COOLDOWN_SEC);

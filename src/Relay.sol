@@ -5,7 +5,7 @@ import {AccessControl} from "../lib/openzeppelin-contracts/contracts/access/Acce
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {PairWhitelist} from "./PairWhitelist.sol";
 import {Treasury} from "./Treasury.sol";
-import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {ISaucerswapRouter} from "./interfaces/ISaucerswapRouter.sol";
 
 /**
  * @title Relay
@@ -17,8 +17,9 @@ contract Relay is AccessControl, ReentrancyGuard {
     bytes32 public constant TRADER_ROLE = keccak256("TRADER_ROLE");
 
     // Contracts
-    PairWhitelist public immutable pairWhitelist;
-    Treasury public immutable treasury;
+    PairWhitelist public immutable PAIR_WHITELIST;
+    Treasury public immutable TREASURY;
+    ISaucerswapRouter public immutable SAUCERSWAP_ROUTER;
 
     // Risk parameters (DAO-controlled)
     uint256 public maxTradeBps; // Max trade size as % of Treasury balance (basis points, e.g., 1000 = 10%)
@@ -102,6 +103,7 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @notice Constructor
      * @param _pairWhitelist Address of PairWhitelist contract
      * @param _treasury Address of Treasury contract
+     * @param _saucerswapRouter Address of Saucerswap router
      * @param _admin Address of admin (DAO multisig)
      * @param _initialTraders Array of initial authorized trader addresses
      * @param _maxTradeBps Initial max trade size in basis points
@@ -111,6 +113,7 @@ contract Relay is AccessControl, ReentrancyGuard {
     constructor(
         address _pairWhitelist,
         address _treasury,
+        address _saucerswapRouter,
         address _admin,
         address[] memory _initialTraders,
         uint256 _maxTradeBps,
@@ -119,13 +122,15 @@ contract Relay is AccessControl, ReentrancyGuard {
     ) {
         require(_pairWhitelist != address(0), "Relay: Invalid whitelist");
         require(_treasury != address(0), "Relay: Invalid treasury");
+        require(_saucerswapRouter != address(0), "Relay: Invalid router");
         require(_admin != address(0), "Relay: Invalid admin");
         require(_initialTraders.length > 0, "Relay: No initial traders");
         require(_maxTradeBps <= 10000, "Relay: Invalid maxTradeBps");
         require(_maxSlippageBps <= 10000, "Relay: Invalid maxSlippageBps");
 
-        pairWhitelist = PairWhitelist(_pairWhitelist);
-        treasury = Treasury(_treasury);
+        PAIR_WHITELIST = PairWhitelist(_pairWhitelist);
+        TREASURY = Treasury(_treasury);
+        SAUCERSWAP_ROUTER = ISaucerswapRouter(_saucerswapRouter);
 
         maxTradeBps = _maxTradeBps;
         maxSlippageBps = _maxSlippageBps;
@@ -168,7 +173,7 @@ contract Relay is AccessControl, ReentrancyGuard {
             tokenOut,
             amountIn,
             minAmountOut,
-            treasury.getBalance(tokenIn),
+            TREASURY.getBalance(tokenIn),
             maxTradeBps,
             maxSlippageBps,
             block.timestamp
@@ -178,7 +183,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         lastTradeTimestamp = block.timestamp;
 
         // Forward to Treasury
-        amountOut = treasury.executeSwap(tokenIn, tokenOut, amountIn, minAmountOut, deadline);
+        amountOut = TREASURY.executeSwap(tokenIn, tokenOut, amountIn, minAmountOut, deadline);
 
         emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
 
@@ -199,7 +204,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         nonReentrant
         returns (uint256 burnedAmount)
     {
-        address htkToken = treasury.HTK_TOKEN();
+        address htkToken = TREASURY.HTK_TOKEN();
 
         emit TradeProposed(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
@@ -215,7 +220,7 @@ contract Relay is AccessControl, ReentrancyGuard {
             htkToken,
             amountIn,
             minAmountOut,
-            treasury.getBalance(tokenIn),
+            TREASURY.getBalance(tokenIn),
             maxTradeBps,
             maxSlippageBps,
             block.timestamp
@@ -225,7 +230,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         lastTradeTimestamp = block.timestamp;
 
         // Forward to Treasury
-        burnedAmount = treasury.executeBuybackAndBurn(tokenIn, amountIn, minAmountOut, deadline);
+        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, amountIn, minAmountOut, deadline);
 
         emit TradeForwarded(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, burnedAmount, block.timestamp
@@ -240,7 +245,7 @@ contract Relay is AccessControl, ReentrancyGuard {
      */
     function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut) private view {
         // 1. Validate pair whitelist
-        if (!pairWhitelist.isPairWhitelisted(tokenIn, tokenOut)) {
+        if (!PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut)) {
             revert PairNotWhitelisted(tokenIn, tokenOut);
         }
 
@@ -250,7 +255,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         }
 
         // 3. Check Treasury balance
-        uint256 treasuryBalance = treasury.getBalance(tokenIn);
+        uint256 treasuryBalance = TREASURY.getBalance(tokenIn);
         if (treasuryBalance < amountIn) {
             revert InsufficientTreasuryBalance(treasuryBalance, amountIn);
         }
@@ -262,7 +267,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         }
 
         // 5. Validate slippage (maxSlippageBps)
-        uint256 impliedSlippage = _calculateImpliedSlippage(amountIn, minAmountOut);
+        uint256 impliedSlippage = _calculateImpliedSlippage(tokenIn, tokenOut, amountIn, minAmountOut);
         if (impliedSlippage > maxSlippageBps) {
             revert ExceedsMaxSlippage(impliedSlippage, maxSlippageBps);
         }
@@ -277,15 +282,38 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Calculate implied slippage (simplified)
-     * @dev In production, this should use oracle prices. For now, placeholder logic.
+     * @notice Calculate implied slippage by querying Saucerswap router
+     * @dev Queries router for expected output and compares with minAmountOut
+     * @param tokenIn Input token address
+     * @param tokenOut Output token address
+     * @param amountIn Amount of input token
+     * @param minAmountOut Minimum acceptable output amount (with slippage tolerance)
+     * @return slippageBps Slippage in basis points
      */
-    function _calculateImpliedSlippage(uint256 amountIn, uint256 minAmountOut) private pure returns (uint256) {
-        if (minAmountOut >= amountIn) {
+    function _calculateImpliedSlippage(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
+        private
+        view
+        returns (uint256 slippageBps)
+    {
+        // Build path for router query
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+
+        // Query router for expected output (without slippage)
+        uint256[] memory amounts = SAUCERSWAP_ROUTER.getAmountsOut(amountIn, path);
+        uint256 expectedAmountOut = amounts[1];
+
+        // If minAmountOut >= expected, no slippage (return 0)
+        if (minAmountOut >= expectedAmountOut) {
             return 0;
         }
-        uint256 slippageAmount = amountIn - minAmountOut;
-        return (slippageAmount * 10000) / amountIn;
+
+        // Calculate slippage: (expected - min) / expected * 10000
+        uint256 slippageAmount = expectedAmountOut - minAmountOut;
+        slippageBps = (slippageAmount * 10000) / expectedAmountOut;
+
+        return slippageBps;
     }
 
     /**

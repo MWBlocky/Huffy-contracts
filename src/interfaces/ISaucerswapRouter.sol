@@ -14,4 +14,12 @@ interface ISaucerswapRouter {
         address to,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
+
+    /**
+     * @notice Get expected output amounts for a given input amount
+     * @param amountIn Amount of input token
+     * @param path Array of token addresses representing the swap path
+     * @return amounts Array of amounts for each step in the path
+     */
+    function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts);
 }

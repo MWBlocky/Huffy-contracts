@@ -7,7 +7,6 @@ import {MockERC20} from "../src/mocks/MockERC20.sol";
 import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
 import {MockRelay} from "../src/mocks/MockRelay.sol";
 import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IAccessControl} from "../lib/openzeppelin-contracts/contracts/access/IAccessControl.sol";
 
 contract TreasuryTest is Test {
     using SafeERC20 for IERC20;

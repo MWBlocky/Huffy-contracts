@@ -160,7 +160,8 @@ contract Treasury is AccessControl, ReentrancyGuard {
         require(balanceIn >= amountIn, "Treasury: Insufficient balance");
 
         // Approve router to spend tokenIn
-        IERC20(tokenIn).forceApprove(address(SAUCERSWAP_ROUTER), amountIn);
+        IERC20(tokenIn).approve(address(SAUCERSWAP_ROUTER), 0); // Reset first
+        IERC20(tokenIn).approve(address(SAUCERSWAP_ROUTER), amountIn);
 
         // Build path [tokenIn, tokenOut]
         address[] memory path = new address[](2);
@@ -215,7 +216,8 @@ contract Treasury is AccessControl, ReentrancyGuard {
         returns (uint256 htkReceived)
     {
         // Approve router to spend tokens
-        IERC20(tokenIn).forceApprove(address(SAUCERSWAP_ROUTER), amountIn);
+        IERC20(tokenIn).approve(address(SAUCERSWAP_ROUTER), 0); // Reset first
+        IERC20(tokenIn).approve(address(SAUCERSWAP_ROUTER), amountIn);
 
         // Prepare swap path
         address[] memory path = new address[](2);
