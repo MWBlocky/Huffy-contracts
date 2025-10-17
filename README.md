@@ -1,165 +1,200 @@
-# Hedera Testnet: Deploy Treasury and Mocks, and Run Operations
+# Huffy Contracts
 
-This project includes a Treasury contract that can hold tokens, execute buyback-and-burn operations via the Saucerswap router, perform generic token swaps, and allow DAO-controlled withdrawals.
+Smart contract suite for the Huffy DAO treasury management system on Hedera. This repository contains the core contracts for managing treasury funds, executing validated trades, and implementing buyback-and-burn mechanisms.
 
-Important context from the code:
-- Treasury constructor: `Treasury(address htkToken, address saucerswapRouter, address daoAdmin, address relay)`
-- Roles:
-  - `DEFAULT_ADMIN_ROLE` and `DAO_ROLE` are given to `daoAdmin` at deploy time.
-  - `RELAY_ROLE` is given to `relay` at deploy time; only the relay can call swap and buyback.
-- Router interface: uses `swapExactTokensForTokens` as per Saucerswap.
-- Mocks: `MockERC20`, `MockSaucerswapRouter` (with settable exchange rates), `MockDAO` (acts as DAO admin), and `MockRelay` (to invoke Treasury methods).
+## Table of Contents
 
-Important script roles:
-- script/DeployMocks.s.sol: Deploys a full testing environment on testnet, including mocks AND a Treasury instance wired to the mock router. Use this to prepare contracts and addresses for end-to-end testing.
-- script/Treasury.s.sol: Production deployment script for the real Treasury on testnet/mainnet with your real token/router/admin/relay settings.
+- [Overview](#overview)
+- [Core Contracts](#core-contracts)
+- [Getting Started](#getting-started)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Documentation](#documentation)
 
-## Prerequisites
+## Overview
 
-- Foundry installed (forge, cast)
-- Hedera Testnet RPC URL and a funded testnet account private key
-  - Example RPC providers: HashIO
+The Huffy Contracts system implements a secure, DAO-controlled treasury with multi-layered validation for all trading operations. The architecture separates concerns between fund custody (Treasury), trade validation (Relay), and pair management (PairWhitelist).
 
-Optional but recommended:
-- Create a `.env` file in the project root so `forge` and scripts can load variables automatically.
+### Key Features
 
-Example `.env` values (placeholders):
-```
-HEDERA_RPC_URL=https://your-hedera-testnet-rpc
-PRIVATE_KEY=0xabc... # your deployer account private key
-# Used by script/Treasury.s.sol
-HTK_TOKEN_ADDRESS=0xYourHTKTokenAddressOnTestnet
-SAUCERSWAP_ROUTER=0x00000000000000000000000000000000001A9B39  # default in script (Hedera Testnet router)
-DAO_ADMIN_ADDRESS=0xYourDaoAdminEvmAddress
-RELAY_ADDRESS=0xYourRelayEvmAddress   # can be your deployer for initial testing
-```
+ **DAO-Controlled Treasury** - Secure fund management with role-based access control    
+ **Trade Validation Layer** - Multi-parameter risk checks before execution  
+ **Pair Whitelisting** - Only approved trading pairs can be executed    
+ **Position Size Limits** - Configurable maximum trade size as % of balance     
+ **Slippage Protection** - Enforced maximum slippage tolerance  
+ **Rate Limiting** - Cooldown periods between trades    
+ **Buyback & Burn** - Automated HTK token buyback and burning   
+ **Comprehensive Events** - Full transparency via detailed event logs
 
-Note: The Treasury deployment script uses a default Saucerswap Testnet router address if `SAUCERSWAP_ROUTER` isn’t provided. You can override via env var if needed.
+## Core Contracts
 
-## 1) Deploy Mocks to Hedera Testnet (testing environment preparation)
+### Treasury.sol
+Main contract holding DAO funds and executing trades. Only accepts execution commands from authorized Relay contract.   
+Supports:
+- Token deposits and DAO-controlled withdrawals
+- Buyback-and-burn operations for HTK governance token
+- Generic token swaps via Saucerswap DEX
+- Role-based access control (DAO_ROLE, RELAY_ROLE)
 
-If you don’t have real tokens or prefer a fully controlled environment on testnet, deploy mocks. This will deploy:
-- Mock HTK (18 decimals)
-- Mock USDC (6 decimals)
-- Mock Saucerswap Router and seed it with HTK
-- Mock DAO (admin) and use it as the Treasury DAO admin
-- Treasury wired to the mock router (admin = MockDAO, temporary relay = deployer)
-- Mock Relay and assign it as the Treasury relay (updated by MockDAO)
+### Relay.sol
+Validation gateway enforcing DAO risk parameters before forwarding trades to Treasury:
+- **Pair Whitelisting**: Validates against PairWhitelist contract
+- **maxTradeBps**: Limits trade size (e.g., 10% of Treasury balance)
+- **maxSlippageBps**: Enforces slippage tolerance (e.g., 5%)
+- **tradeCooldownSec**: Rate limiting between trades
+- **Trader Authorization**: Only allowlisted traders (e.g., HuffyPuppet) can submit
 
-Command:
-```
-source .env
-forge script script/DeployMocks.s.sol:DeployMocks --rpc-url RPC_URL --private-key PRIVATE_KEY --broadcast -vv
-```
-After completion, the script prints and saves addresses to `deployments/mocks-*.json`.
+### PairWhitelist.sol
+DAO-managed registry of approved trading pairs. Supports:
+- Individual pair whitelisting/blacklisting
+- Batch operations for multiple pairs
+- Query interface for validation checks
 
-Keep handy:
-- HTK token address
-- USDC token address
-- Mock router address
-- Mock DAO address (admin of Treasury)
-- Treasury address
-- Mock Relay address (has the relay role on Treasury)
+## Getting Started
 
-## 2) Deploy the real Treasury on Hedera Testnet (production deployment script)
+### Prerequisites
 
-Use an existing HTK token and the testnet Saucerswap router (or your own), set DAO and Relay addresses.
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (forge, cast, anvil)
+- Hedera Testnet account with test HBAR
+- RPC endpoint (e.g., HashIO, Arkhia)
 
-Command
-```
-forge script script/Treasury.s.sol:DeployTreasury --rpc-url $env:RPC_URL --private-key $env:PRIVATE_KEY --broadcast -vv
-```
-The script prints and saves deployment info to `deployments/treasury-*.json`.
+### Installation
 
-Tip: If you plan to use a dedicated Relay contract later, you can initially set `RELAY_ADDRESS` to the deployer, deploy a `MockRelay` or your real relay, and then call `updateRelay(oldRelay, newRelay)` from the DAO admin.
+```bash
+# Clone the repository
+git clone https://github.com/Ariane-Labs/Huffy-contracts/
+cd huffy-contracts
 
-## 3) Operations walkthrough
+# Install dependencies
+forge install
 
-In the following examples:
-- Replace addresses and amounts with your own.
-- Approvals are required before the Treasury or Router can move tokens.
-- Deadlines are UNIX timestamps (seconds). You can use a value about an hour in the future.
-
-We’ll use `cast` to submit transactions with the deployer’s private key. You can also use other wallets.
-
-### A) Deposit tokens into Treasury
-
-1) Approve the Treasury to pull tokens from your wallet:
-```
-cast send $USDC_TOKEN_ADDRESS "approve(address,uint256)" $TREASURY_ADDRESS 100000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-2) Call deposit on Treasury:
-```
-cast send $TREASURY_ADDRESS "deposit(address,uint256)" $USDC_TOKEN_ADDRESS 100000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-Notes:
-- For USDC with 6 decimals, `100000000` = 100 USDC.
-- Check balance held by Treasury:
-```
-cast call $TREASURY_ADDRESS "getBalance(address)(uint256)" $USDC_TOKEN_ADDRESS --rpc-url $RPC_URL
+# Build contracts
+forge build
 ```
 
-### B) Withdraw tokens from Treasury (DAO only)
+### Environment Setup
 
-Only an account with `DAO_ROLE` can call `withdraw`.
-```
-# From DAO admin account (use its private key)
-cast send $TREASURY_ADDRESS "withdraw(address,address,uint256)" $USDC_TOKEN_ADDRESS 0xRecipient 50000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-This withdraws 50 USDC (6 decimals) to `0xRecipient`.
+Create a `.env` file in the project root from env.example and fill in the required variables.
 
-If you deployed mocks and are using the MockDAO as admin, call via the MockDAO contract from the owner account:
-```
-cast send $DAO_ADMIN_ADDRESS "withdrawFromTreasury(address,address,uint256)" $USDC_TOKEN_ADDRESS 0xRecipient 50000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
+## Testing
 
-### C) Buyback-and-Burn HTK via Saucerswap (Relay only)
+### Run All Tests
 
-Only an account with `RELAY_ROLE` can call `executeBuybackAndBurn`. You may invoke it directly on Treasury (if your caller has the role) or through `MockRelay` which forwards the call.
+```bash
+# Run all tests
+forge test
 
-Direct call (caller must have `RELAY_ROLE`):
-```
-# Swap 100 USDC for HTK and burn the HTK received
-cast send $TREASURY_ADDRESS "executeBuybackAndBurn(address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-Via MockRelay (recommended during testing):
-```
-cast send $RELAY "executeBuybackAndBurn(address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS 100000000 0 DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-Notes:
-- Ensure the Treasury holds enough `tokenIn` (e.g., USDC) before calling.
-- `amountOutMin` can be set to 0 for testing, or a slippage-protected minimum.
-- The burn is implemented by transferring HTK to the `0xdead` address and emits `Burned(amount, initiator, timestamp)`.
+# Run with verbosity
+forge test -vvv
 
-### D) Generic trade-swap without burning (Relay only)
+# Run specific test contract
+forge test --match-contract TreasuryTest
+forge test --match-contract RelayTest
 
-Use `executeSwap(tokenIn, tokenOut, amountIn, amountOutMin, deadline)` to swap and keep proceeds in the Treasury.
-
-Direct call on Treasury (requires `RELAY_ROLE`):
-```
-# Example: swap USDC -> HTK
-cast send $TREASURY_ADDRESS "executeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-Via MockRelay:
-```
-cast send $RELAY_ADDRESS "executeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-```
-Check the Treasury’s balances after the swap:
-```
-cast call $TREASURY_ADDRESS "getBalance(address)(uint256)" $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL
+# Run with gas reporting
+forge test --gas-report
 ```
 
-## 4) Managing the Relay
+### Test Coverage
 
-To change the relay after deployment, the DAO admin calls `updateRelay(oldRelay, newRelay)`:
+```bash
+forge coverage
 ```
-cast send $TREASURY_ADDRESS "updateRelay(address,address)" 0xOldRelay 0xNewRelay --rpc-url $RPC_URL --private-key 0xDaoAdminPrivateKey
+
+## Deployment
+
+### Option 1: Testing Environment (Mocks)
+
+Deploy complete test environment with mock tokens and router:
+
+```bash
+forge script script/DeployMocks.s.sol:DeployMocks \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast -vv
 ```
 
-## 5) Notes and Troubleshooting
+This deploys:
+- Mock HTK and USDC tokens
+- Mock Saucerswap Router
+- Mock DAO (admin)
+- Treasury (with mocks)
+- Mock Relay
 
-- Approvals: Before swapping, the Treasury approves the router internally for the specific `amountIn`. You only need to ensure the Treasury actually holds the `tokenIn` (via deposit or funding) — users must approve the Treasury before depositing.
-- Deadlines: Use a UNIX timestamp in the future; expired deadlines will revert.
-- Slippage: Use a sensible `amountOutMin` on testnet vs. setting it to 0 for simplicity.
-- Hedera Token Service (HTS): On Hedera EVM, HTS tokens mapped to ERC-20 behave like standard ERC-20 for approvals/transfers in this repo’s context.
-- Explorers: Use HashScan Testnet to look up addresses and verify events like `Deposited`, `Withdrawn`, `BuybackExecuted`, `SwapExecuted`, and `Burned`.
+### Option 2: Production Deployment
+
+Deploy production Treasury with real tokens:
+
+```bash
+forge script script/Treasury.s.sol:DeployTreasury \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast -vv
+```
+
+### Deploy Relay System
+
+1. Deploy PairWhitelist:
+```bash
+forge create src/PairWhitelist.sol:PairWhitelist \
+  --constructor-args $DAO_ADMIN_ADDRESS \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY
+```
+
+2. Deploy Relay:
+```bash
+forge create src/Relay.sol:Relay \
+  --constructor-args \
+    $PAIR_WHITELIST_ADDRESS \
+    $TREASURY_ADDRESS \
+    $DAO_ADMIN_ADDRESS \
+    $INITIAL_TRADER_ADDRESS \
+    $MAX_TRADE_BPS \
+    $MAX_SLIPPAGE_BPS \
+    $TRADE_COOLDOWN_SEC \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY
+```
+
+3. Update Treasury to use new Relay:
+```bash
+cast send $TREASURY_ADDRESS "updateRelay(address,address)" \
+  $OLD_RELAY_ADDRESS $NEW_RELAY_ADDRESS \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $DAO_ADMIN_PRIVATE_KEY
+```
+
+## Documentation
+
+Detailed guides for testing and operations:
+
+### [TREASURY_TESTING.md](./TREASURY_TESTING.md)
+Complete guide for deploying and testing the Treasury contract:
+- Deployment instructions (mocks and production)
+- Deposit and withdrawal operations
+- Buyback-and-burn execution
+- Generic swap operations
+- Relay management
+- Troubleshooting
+
+### [RELAY_TESTING.md](./RELAY_TESTING.md)
+Complete guide for deploying and testing the Relay system:
+- Relay and PairWhitelist deployment
+- Pair whitelisting operations
+- Trade proposal workflows (swap and buyback)
+- Risk parameter configuration (maxTradeBps, maxSlippageBps, cooldown)
+- Trader authorization management
+- Event monitoring
+- Troubleshooting
+
+## Support & Resources
+
+- **Hedera Docs**: https://docs.hedera.com/
+- **Saucerswap Docs**: https://docs.saucerswap.finance/
+- **Foundry Book**: https://book.getfoundry.sh/
+- **HashScan Explorer**: https://hashscan.io/
+
+## License
+
+MIT License
