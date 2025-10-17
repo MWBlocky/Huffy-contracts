@@ -46,11 +46,20 @@ contract MockSaucerswapRouter {
         uint256 rate = exchangeRates[tokenIn][tokenOut];
         require(rate > 0, "Router: No exchange rate set");
 
+        uint8 inDecimals = IERC20Metadata(tokenIn).decimals();
         uint8 outDecimals = IERC20Metadata(tokenOut).decimals();
 
-        // rate is scaled by 1e18, so: amountOut = amountIn * rate / 1e18
-        // Then adjust for output token decimals
-        uint256 amountOut = (amountIn * rate * (10 ** uint256(outDecimals))) / 1e18;
+        // rate is scaled by 1e18 representing the exchange rate between tokens in their native units
+        // Formula: amountOut = amountIn * rate / 10^inDecimals * 10^outDecimals / 1e18
+        // Rearranged to avoid precision loss: amountOut = (amountIn * rate * 10^outDecimals) / (1e18 * 10^inDecimals)
+        uint256 amountOut = (amountIn * rate) / 1e18;
+
+        // Adjust for decimal differences
+        if (outDecimals > inDecimals) {
+            amountOut = amountOut * (10 ** (outDecimals - inDecimals));
+        } else if (inDecimals > outDecimals) {
+            amountOut = amountOut / (10 ** (inDecimals - outDecimals));
+        }
 
         require(amountOut >= amountOutMin, "Router: Insufficient output");
 
@@ -80,11 +89,20 @@ contract MockSaucerswapRouter {
         uint256 rate = exchangeRates[tokenIn][tokenOut];
         require(rate > 0, "Router: No exchange rate set");
 
+        uint8 inDecimals = IERC20Metadata(tokenIn).decimals();
         uint8 outDecimals = IERC20Metadata(tokenOut).decimals();
 
-        // rate is scaled by 1e18, so: amountOut = amountIn * rate / 1e18
-        // Then adjust for output token decimals
-        uint256 amountOut = (amountIn * rate * (10 ** uint256(outDecimals))) / 1e18;
+        // rate is scaled by 1e18 representing the exchange rate between tokens in their native units
+        // Formula: amountOut = amountIn * rate / 10^inDecimals * 10^outDecimals / 1e18
+        // Rearranged to avoid precision loss: amountOut = (amountIn * rate * 10^outDecimals) / (1e18 * 10^inDecimals)
+        uint256 amountOut = (amountIn * rate) / 1e18;
+
+        // Adjust for decimal differences
+        if (outDecimals > inDecimals) {
+            amountOut = amountOut * (10 ** (outDecimals - inDecimals));
+        } else if (inDecimals > outDecimals) {
+            amountOut = amountOut / (10 ** (inDecimals - outDecimals));
+        }
 
         amounts = new uint256[](2);
         amounts[0] = amountIn;

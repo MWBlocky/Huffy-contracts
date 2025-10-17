@@ -125,9 +125,9 @@ contract RelayTest is Test {
         usdtToken.mint(address(router), INITIAL_SUPPLY);
         usdcToken.mint(address(router), INITIAL_SUPPLY);
 
-        // Setup exchange rates
+        // Setup exchange rates (rate is scaled by 1e18)
         router.setExchangeRate(address(usdcToken), address(htkToken), 2e18); // 1 USDC = 2 HTK
-        router.setExchangeRate(address(usdcToken), address(usdtToken), 1e6); // 1 USDC = 1 USDT
+        router.setExchangeRate(address(usdcToken), address(usdtToken), 1e18); // 1 USDC = 1 USDT (1:1)
     }
 
     /* ============ Deployment Tests ============ */
