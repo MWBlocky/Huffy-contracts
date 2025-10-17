@@ -103,7 +103,13 @@ contract RelayTest is Test {
         address[] memory initialTraders = new address[](1);
         initialTraders[0] = trader;
         relay = new Relay(
-            address(pairWhitelist), address(treasury), dao, initialTraders, MAX_TRADE_BPS, MAX_SLIPPAGE_BPS, TRADE_COOLDOWN_SEC
+            address(pairWhitelist),
+            address(treasury),
+            dao,
+            initialTraders,
+            MAX_TRADE_BPS,
+            MAX_SLIPPAGE_BPS,
+            TRADE_COOLDOWN_SEC
         );
 
         // Update Treasury to use Relay
