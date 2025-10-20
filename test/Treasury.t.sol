@@ -25,9 +25,9 @@ contract TreasuryTest is Test {
 
     uint256 constant INITIAL_SUPPLY = 1_000_000e6;
     // Exchange rates in MockSaucerswapRouter are 1e18-scaled (fixed-point, 18 decimals),
-    // independent of token decimals. With 6→6 tokens, amountOut = (amountIn * EXCHANGE_RATE_1e18) / 1e18.
-    // Example: 1 USDC = 2 HTK => EXCHANGE_RATE_1e18 = 2e18.
-    uint256 constant EXCHANGE_RATE_1e18 = 2e18; // 1 USDC = 2 HTK (1e18-scaled)
+    // independent of token decimals. With 6→6 tokens, amountOut = (amountIn * EXCHANGE_RATE_1E18) / 1e18.
+    // Example: 1 USDC = 2 HTK => EXCHANGE_RATE_1E18 = 2e18.
+    uint256 constant EXCHANGE_RATE_1E18 = 2e18; // 1 USDC = 2 HTK (1e18-scaled)
 
     event Deposited(address indexed token, address indexed depositor, uint256 amount, uint256 timestamp);
 
@@ -81,7 +81,7 @@ contract TreasuryTest is Test {
         usdcToken.mint(address(treasury), 10_000e6);
 
         // Setup exchange rate
-        saucerswapRouter.setExchangeRate(address(usdcToken), address(htkToken), EXCHANGE_RATE_1e18);
+        saucerswapRouter.setExchangeRate(address(usdcToken), address(htkToken), EXCHANGE_RATE_1E18);
 
         // Deploy MockRelay
         mockRelay = new MockRelay(address(treasury));
@@ -250,8 +250,8 @@ contract TreasuryTest is Test {
         vm.assume(amount > 0 && amount <= 10_000e6);
 
         // amount is in smallest units of USDC (6 decimals). With matching decimals (6->6),
-        // router computes amountOut = (amountIn * EXCHANGE_RATE_1e18) / 1e18.
-        uint256 expectedHtk = (amount * EXCHANGE_RATE_1e18) / 1e18;
+        // router computes amountOut = (amountIn * EXCHANGE_RATE_1E18) / 1e18.
+        uint256 expectedHtk = (amount * EXCHANGE_RATE_1E18) / 1e18;
         uint256 deadline = block.timestamp + 3600;
 
         mockRelay.executeBuybackAndBurn(address(usdcToken), amount, expectedHtk, deadline);
@@ -383,8 +383,8 @@ contract TreasuryTest is Test {
 
     function testFuzz_Swap_USDCToHTK(uint256 amount) public {
         vm.assume(amount > 0 && amount <= 10_000e6);
-        // With 6→6 decimals and EXCHANGE_RATE_1e18 scaled by 1e18, router computes: amountOut = (amountIn * EXCHANGE_RATE_1e18) / 1e18
-        uint256 expectedOut = (amount * EXCHANGE_RATE_1e18) / 1e18;
+        // With 6→6 decimals and EXCHANGE_RATE_1E18 scaled by 1e18, router computes: amountOut = (amountIn * EXCHANGE_RATE_1E18) / 1e18
+        uint256 expectedOut = (amount * EXCHANGE_RATE_1E18) / 1e18;
         uint256 deadline = block.timestamp + 3600;
 
         uint256 outBefore = htkToken.balanceOf(address(treasury));
@@ -436,12 +436,12 @@ contract TreasuryTest is Test {
         // htkToken already funded to router in setUp
 
         // Set exchange rate: 1 WETH = 2 HTK (1e18-scaled)
-        saucerswapRouter.setExchangeRate(address(weth), address(htkToken), EXCHANGE_RATE_1e18);
+        saucerswapRouter.setExchangeRate(address(weth), address(htkToken), EXCHANGE_RATE_1E18);
 
         uint256 amountIn = 1e18; // 1 WETH
         // Compute expected out using min-dec normalization
         // min(decimals) = 6; adjustedIn = amountIn / 1e12; amountOutUnits = adjustedIn * rate / 1e18; amountOut = amountOutUnits
-        uint256 expectedOut = ((amountIn / (10 ** (18 - 6))) * EXCHANGE_RATE_1e18) / 1e18;
+        uint256 expectedOut = (amountIn * EXCHANGE_RATE_1E18) / ((10 ** (18 - 6)) * 1e18);
         uint256 deadline = block.timestamp + 3600;
 
         uint256 outBefore = htkToken.balanceOf(address(treasury));
@@ -461,11 +461,11 @@ contract TreasuryTest is Test {
         weth.mint(address(saucerswapRouter), wethRouterAmount);
 
         // Set exchange rate: 1 USDC = 2 WETH (1e18-scaled)
-        saucerswapRouter.setExchangeRate(address(usdcToken), address(weth), EXCHANGE_RATE_1e18);
+        saucerswapRouter.setExchangeRate(address(usdcToken), address(weth), EXCHANGE_RATE_1E18);
 
         uint256 amountIn = 1e6; // 1 USDC
         // min(decimals) = 6; adjustedIn = amountIn; amountOutUnits = adjustedIn * rate / 1e18; amountOut = amountOutUnits * 1e12
-        uint256 expectedOut = (((amountIn) * EXCHANGE_RATE_1e18) / 1e18) * (10 ** (18 - 6));
+        uint256 expectedOut = ((amountIn) * EXCHANGE_RATE_1E18 * (10 ** (18 - 6))) / 1e18;
         uint256 deadline = block.timestamp + 3600;
 
         uint256 outBefore = weth.balanceOf(address(treasury));
