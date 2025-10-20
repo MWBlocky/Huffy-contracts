@@ -243,41 +243,118 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @notice Validate trade against all DAO rules
      * @dev Reverts on any rule violation with detailed event emission
      */
-    function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut) private view {
+    function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut) private {
+        uint256 cooldownRemaining = 0;
+        if (lastTradeTimestamp > 0) {
+            uint256 elapsed = block.timestamp - lastTradeTimestamp;
+            if (elapsed < tradeCooldownSec) {
+                cooldownRemaining = tradeCooldownSec - elapsed;
+            }
+        }
+
         // 1. Validate pair whitelist
         if (!PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut)) {
+            emit TradeRejected(
+                msg.sender,
+                RejectionReason.PAIR_NOT_WHITELISTED,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                maxTradeBps,
+                maxSlippageBps,
+                cooldownRemaining,
+                block.timestamp
+            );
             revert PairNotWhitelisted(tokenIn, tokenOut);
         }
 
         // 2. Validate basic parameters
         if (tokenIn == address(0) || tokenOut == address(0) || amountIn == 0 || minAmountOut == 0) {
+            emit TradeRejected(
+                msg.sender,
+                RejectionReason.INVALID_PARAMETERS,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                maxTradeBps,
+                maxSlippageBps,
+                cooldownRemaining,
+                block.timestamp
+            );
             revert InvalidParameters();
         }
 
         // 3. Check Treasury balance
         uint256 treasuryBalance = TREASURY.getBalance(tokenIn);
         if (treasuryBalance < amountIn) {
+            emit TradeRejected(
+                msg.sender,
+                RejectionReason.INSUFFICIENT_TREASURY_BALANCE,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                maxTradeBps,
+                maxSlippageBps,
+                cooldownRemaining,
+                block.timestamp
+            );
             revert InsufficientTreasuryBalance(treasuryBalance, amountIn);
         }
 
         // 4. Validate max trade size (maxTradeBps)
         uint256 maxAllowedAmount = (treasuryBalance * maxTradeBps) / 10000;
         if (amountIn > maxAllowedAmount) {
+            emit TradeRejected(
+                msg.sender,
+                RejectionReason.EXCEEDS_MAX_TRADE_SIZE,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                maxTradeBps,
+                maxSlippageBps,
+                cooldownRemaining,
+                block.timestamp
+            );
             revert ExceedsMaxTradeSize(amountIn, maxAllowedAmount, maxTradeBps);
         }
 
         // 5. Validate slippage (maxSlippageBps)
         uint256 impliedSlippage = _calculateImpliedSlippage(tokenIn, tokenOut, amountIn, minAmountOut);
         if (impliedSlippage > maxSlippageBps) {
+            emit TradeRejected(
+                msg.sender,
+                RejectionReason.EXCEEDS_MAX_SLIPPAGE,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                maxTradeBps,
+                maxSlippageBps,
+                cooldownRemaining,
+                block.timestamp
+            );
             revert ExceedsMaxSlippage(impliedSlippage, maxSlippageBps);
         }
 
         // 6. Validate cooldown period
-        if (lastTradeTimestamp > 0) {
-            uint256 timeSinceLastTrade = block.timestamp - lastTradeTimestamp;
-            if (timeSinceLastTrade < tradeCooldownSec) {
-                revert CooldownNotElapsed(tradeCooldownSec - timeSinceLastTrade, tradeCooldownSec);
-            }
+        if (cooldownRemaining > 0) {
+            emit TradeRejected(
+                msg.sender,
+                RejectionReason.COOLDOWN_NOT_ELAPSED,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                maxTradeBps,
+                maxSlippageBps,
+                cooldownRemaining,
+                block.timestamp
+            );
+            revert CooldownNotElapsed(cooldownRemaining, tradeCooldownSec);
         }
     }
 
