@@ -82,6 +82,10 @@ cast send $MOCK_DAO_ADDRESS "updateRelay(address,address)" 0x38a024C0b412B9d1db8
 
 ## 7. Configure MockSaucerswapRouter Exchange Rates
 
+Note: In the mock router, exchange rates are 1e18-scaled (fixed-point, 18 decimals), independent of token decimals. Tokens may have different decimals (in our mocks HTK has 18 decimals and USDC has 6). Set rates like 0.5e18 and 2e18. Examples:
+- 1 HTK = 0.5 USDC → rate = 0.5e18
+- 1 USDC = 2 HTK → rate = 2e18
+
 ```shell
 # Set exchange rate: 1 HTK = 0.5 USDC (rate = 0.5 * 10^18)
 cast send $SAUCERSWAP_ROUTER "setExchangeRate(address,address,uint256)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 500000000000000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
@@ -103,13 +107,13 @@ cast call $SAUCERSWAP_ROUTER "exchangeRates(address,address)" $USDC_TOKEN_ADDRES
 ## 8. Fund MockSaucerswapRouter with Tokens
 
 ```shell
-# Approve HTK for router
-cast send $HTK_TOKEN_ADDRESS "approve(address,uint256)" $SAUCERSWAP_ROUTER 10000000000000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# Approve HTK for router (HTK has 18 decimals)
+cast send $HTK_TOKEN_ADDRESS "approve(address,uint256)" $SAUCERSWAP_ROUTER 100000000000000000000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ```shell
-# Fund router with HTK (100,000 HTK = 100000 * 10^8)
-cast send $SAUCERSWAP_ROUTER "fundRouter(address,uint256)" $HTK_TOKEN_ADDRESS 10000000000000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# Fund router with HTK (100,000 HTK = 100000 * 10^18)
+cast send $SAUCERSWAP_ROUTER "fundRouter(address,uint256)" $HTK_TOKEN_ADDRESS 100000000000000000000000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ```shell
@@ -218,10 +222,10 @@ echo "HTK before swap:"
 cast call $TREASURY_ADDRESS "getBalance(address)" $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL
 ```
 ```shell
-# Step 3: Propose (relay) and Execute (treasury) swap 1000 USDC (6 decimals) -> HTK
+# Step 3: Propose (relay) and Execute (treasury) swap 1000 USDC (6 decimals) -> HTK (18 decimals)
 # amountIn = 1000 * 10^6 = 1000000000 (1000 USDC)
-# amountOutMin = 1800 * 10^8 = 180000000000 (1800 HTK with 10% slippage)
-cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 180000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# amountOutMin = 1900 * 10^18 = 1900000000000000000000 (1900 HTK with 5% slippage)
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 1900000000000000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ```shell
@@ -250,8 +254,8 @@ cast call $TREASURY_ADDRESS "getBalance(address)" $HTK_TOKEN_ADDRESS --rpc-url $
 ```shell
 # Step 2: Execute buyback-and-burn 500 USDC -> HTK (burn)
 # amountIn = 500 * 10^6 = 500000000 (500 USDC)
-# amountOutMin = 900 * 10^8 = 90000000000 (900 HTK with 10% slippage)
-cast send $RELAY_ADDRESS "proposeBuybackAndBurn(address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS 500000000 90000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# amountOutMin = 950 * 10^18 = 950000000000000000000 (950 HTK with 5% slippage)
+cast send $RELAY_ADDRESS "proposeBuybackAndBurn(address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS 500000000 950000000000000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 ```shell
 # Step 3: Check balances after buyback (HTK should be burned – sent to 0xdead)
@@ -272,16 +276,26 @@ cast call $HTK_TOKEN_ADDRESS "balanceOf(address)" 0x0000000000000000000000000000
 ## 15. Test Relay – Swap HTK->USDC (reverse direction)
 
 ```shell
-# Execute swap HTK -> USDC
-# amountIn = 1000 * 10^8 = 100000000000 (1000 HTK)
-# amountOutMin = 450 * 10^6 = 450000000 (450 USDC with 10% slippage)
-cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 100000000000 450000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# Note: Relay enforces maxTradeBps (default 10%). The cap is computed on the Treasury's HTK balance.
+# You can check the current maximum allowed input for HTK:
+cast call $RELAY_ADDRESS "getMaxAllowedTradeAmount(address)" $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL
+
+# Option A (respect 10% cap): swap 200 HTK
+# amountIn = 200 * 10^18 = 200000000000000000000 (200 HTK)
+# With rate 1 HTK = 0.5 USDC, expected = 100 USDC; with 5% slippage, min = 95 USDC
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 200000000000000000000 95000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+
+# Option B (if you want to trade 1000 HTK): temporarily raise the cap via DAO to 50%
+# cast send $RELAY_ADDRESS "setMaxTradeBps(uint256)" 5000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# Then you can use the original 1000 HTK example:
+# cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 1000000000000000000000 475000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Check balances
 echo "HTK balance:"
 cast call $TREASURY_ADDRESS "getBalance(address)" $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL
 
 echo "USDC balance:"
+echo "(Note: USDC has 6 decimals)"
 cast call $TREASURY_ADDRESS "getBalance(address)" $USDC_TOKEN_ADDRESS --rpc-url $RPC_URL
 ```
 
@@ -351,19 +365,19 @@ cast send $RELAY_ADDRESS "revokeRole(bytes32,address)" 0x4e6c7e0c7b03dd59adb2b3d
 
 ```shell
 # Update maxTradeBps to 2000 (20%)
-cast send $RELAY_ADDRESS "updateMaxTradeBps(uint256)" 2000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "setMaxTradeBps(uint256)" 2000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Check new value
 cast call $RELAY_ADDRESS "maxTradeBps()" --rpc-url $RPC_URL
 
 # Update maxSlippageBps to 1000 (10%)
-cast send $RELAY_ADDRESS "updateMaxSlippageBps(uint256)" 1000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "setMaxSlippageBps(uint256)" 1000 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Check new value
 cast call $RELAY_ADDRESS "maxSlippageBps()" --rpc-url $RPC_URL
 
 # Update tradeCooldownSec to 120 seconds
-cast send $RELAY_ADDRESS "updateTradeCooldownSec(uint256)" 120 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "setTradeCooldownSec(uint256)" 120 --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Check new value
 cast call $RELAY_ADDRESS "tradeCooldownSec()" --rpc-url $RPC_URL
@@ -381,7 +395,7 @@ cast send $PAIR_WHITELIST_ADDRESS "blacklistPair(address,address)" $USDC_TOKEN_A
 cast call $PAIR_WHITELIST_ADDRESS "isPairWhitelisted(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL
 
 # Attempt swap on blacklisted pair (should fail)
-cast send $RELAY_ADDRESS "requestSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 180000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 1900000000000000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Restore pair to whitelist
 cast send $PAIR_WHITELIST_ADDRESS "whitelistPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
@@ -404,22 +418,22 @@ cast send $PAIR_WHITELIST_ADDRESS "whitelistPairsBatch(address[],address[])" "[$
 ```shell
 # Test 1: Attempt trade without TRADER_ROLE (should fail)
 UNAUTHORIZED_USER=0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
-cast send $RELAY_ADDRESS "requestSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 180000000000 $DEADLINE --rpc-url $RPC_URL --private-key 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 1900000000000000000000 $DEADLINE --rpc-url $RPC_URL --private-key 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 # Expected: AccessControlUnauthorizedAccount
 
 # Test 2: Attempt swap on non-whitelisted pair
-cast send $RELAY_ADDRESS "requestSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 1000000000 1000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 1000000000 1000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 # Expected: Relay: Pair not whitelisted
 
 # Test 3: Attempt trade before cooldown
-cast send $RELAY_ADDRESS "requestSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 180000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 1900000000000000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 # Immediately after:
-cast send $RELAY_ADDRESS "requestSwap(address,address,uint256,uint256,uint256)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 100000000000 450000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS 1000000000000000000000 475000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 # Expected: Relay: Cooldown active
 
 # Test 4: Attempt to exceed maxTradeBps
 # If Treasury has 100,000 USDC, max trade = 10% = 10,000 USDC
-cast send $RELAY_ADDRESS "requestSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 20000000000 1 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 20000000000 1 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 # Expected: Relay: Trade amount exceeds limit
 ```
 

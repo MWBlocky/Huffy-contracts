@@ -21,7 +21,7 @@ contract RelayTest is Test {
     address public trader;
     address public unauthorized;
 
-    uint256 constant INITIAL_SUPPLY = 1_000_000e18;
+    uint256 constant INITIAL_SUPPLY = 1_000_000e6;
     uint256 constant MAX_TRADE_BPS = 1000; // 10%
     uint256 constant MAX_SLIPPAGE_BPS = 500; // 5%
     uint256 constant TRADE_COOLDOWN_SEC = 60; // 1 minute
@@ -85,7 +85,7 @@ contract RelayTest is Test {
         unauthorized = makeAddr("unauthorized");
 
         // Deploy tokens
-        htkToken = new MockERC20("HTK Token", "HTK", 18);
+        htkToken = new MockERC20("HTK Token", "HTK", 6);
         usdcToken = new MockERC20("USDC Token", "USDC", 6);
         usdtToken = new MockERC20("USDT Token", "USDT", 6);
 
@@ -385,7 +385,7 @@ contract RelayTest is Test {
         pairWhitelist.whitelistPair(address(usdcToken), address(htkToken));
 
         uint256 amountIn = 1000e6;
-        uint256 minAmountOut = 1900e18; // Expect ~2000 HTK (allowing 5% slippage)
+        uint256 minAmountOut = 1900e6; // Expect ~2000 HTK (allowing 5% slippage)
 
         vm.expectEmit(true, true, true, false);
         emit TradeProposed(
@@ -404,7 +404,7 @@ contract RelayTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Relay.PairNotWhitelisted.selector, address(usdcToken), address(htkToken))
         );
-        relay.proposeBuybackAndBurn(address(usdcToken), 1000e6, 1900e18, block.timestamp + 1000);
+        relay.proposeBuybackAndBurn(address(usdcToken), 1000e6, 1900e6, block.timestamp + 1000);
     }
 
     /* ============ Invalid Parameters Tests ============ */

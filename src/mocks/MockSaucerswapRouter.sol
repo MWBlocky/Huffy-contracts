@@ -49,26 +49,37 @@ contract MockSaucerswapRouter {
         uint8 inDecimals = IERC20Metadata(tokenIn).decimals();
         uint8 outDecimals = IERC20Metadata(tokenOut).decimals();
 
-        // rate is scaled by 1e18 representing the exchange rate between tokens in their native units
-        // Formula: amountOut = amountIn * rate / 10^inDecimals * 10^outDecimals / 1e18
-        // Rearranged to avoid precision loss: amountOut = (amountIn * rate * 10^outDecimals) / (1e18 * 10^inDecimals)
-        uint256 amountOut = (amountIn * rate) / 1e18;
+        // Normalize using min decimals to handle differing decimal places conservatively.
+        // rate is 1e18-scaled and represents: 1 unit (min(inDecimals,outDecimals)) of tokenIn = rate units of tokenOut (in min decimals).
+        uint8 minDecimals = inDecimals < outDecimals ? inDecimals : outDecimals;
 
-        // Adjust for decimal differences
-        if (outDecimals > inDecimals) {
-            amountOut = amountOut * (10 ** (outDecimals - inDecimals));
-        } else if (inDecimals > outDecimals) {
-            amountOut = amountOut / (10 ** (inDecimals - outDecimals));
+        // Preserve original amountIn for transfers/return values
+        uint256 originalAmountIn = amountIn;
+
+        // Scale input down to min decimals (rounding down)
+        if (inDecimals > minDecimals) {
+            amountIn = amountIn / (10 ** (inDecimals - minDecimals));
+        }
+
+        // Apply rate in min-decimal units
+        uint256 amountOutUnits = (amountIn * rate) / 1e18;
+
+        // Scale output up to tokenOut decimals
+        uint256 amountOut;
+        if (outDecimals > minDecimals) {
+            amountOut = amountOutUnits * (10 ** (outDecimals - minDecimals));
+        } else {
+            amountOut = amountOutUnits;
         }
 
         require(amountOut >= amountOutMin, "Router: Insufficient output");
 
         // Transfer tokens
-        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), originalAmountIn);
         IERC20(tokenOut).safeTransfer(to, amountOut);
 
         amounts = new uint256[](2);
-        amounts[0] = amountIn;
+        amounts[0] = originalAmountIn;
         amounts[1] = amountOut;
 
         return amounts;
@@ -92,16 +103,25 @@ contract MockSaucerswapRouter {
         uint8 inDecimals = IERC20Metadata(tokenIn).decimals();
         uint8 outDecimals = IERC20Metadata(tokenOut).decimals();
 
-        // rate is scaled by 1e18 representing the exchange rate between tokens in their native units
-        // Formula: amountOut = amountIn * rate / 10^inDecimals * 10^outDecimals / 1e18
-        // Rearranged to avoid precision loss: amountOut = (amountIn * rate * 10^outDecimals) / (1e18 * 10^inDecimals)
-        uint256 amountOut = (amountIn * rate) / 1e18;
+        // Normalize using min decimals to handle differing decimal places conservatively.
+        // rate is 1e18-scaled and represents: 1 unit (min(inDecimals,outDecimals)) of tokenIn = rate units of tokenOut (in min decimals).
+        uint8 minDecimals = inDecimals < outDecimals ? inDecimals : outDecimals;
 
-        // Adjust for decimal differences
-        if (outDecimals > inDecimals) {
-            amountOut = amountOut * (10 ** (outDecimals - inDecimals));
-        } else if (inDecimals > outDecimals) {
-            amountOut = amountOut / (10 ** (inDecimals - outDecimals));
+        // Scale input down to min decimals (rounding down) for quote
+        uint256 adjustedIn = amountIn;
+        if (inDecimals > minDecimals) {
+            adjustedIn = adjustedIn / (10 ** (inDecimals - minDecimals));
+        }
+
+        // Apply rate in min-decimal units
+        uint256 amountOutUnits = (adjustedIn * rate) / 1e18;
+
+        // Scale output up to tokenOut decimals
+        uint256 amountOut;
+        if (outDecimals > minDecimals) {
+            amountOut = amountOutUnits * (10 ** (outDecimals - minDecimals));
+        } else {
+            amountOut = amountOutUnits;
         }
 
         amounts = new uint256[](2);

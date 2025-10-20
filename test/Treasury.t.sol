@@ -23,8 +23,11 @@ contract TreasuryTest is Test {
     address public user2;
     address public unauthorized;
 
-    uint256 constant INITIAL_SUPPLY = 1_000_000e18;
-    uint256 constant EXCHANGE_RATE = 2e18; // 1 USDC = 2 HTK
+    uint256 constant INITIAL_SUPPLY = 1_000_000e6;
+    // Exchange rates in MockSaucerswapRouter are 1e18-scaled (fixed-point, 18 decimals),
+    // independent of token decimals. With 6→6 tokens, amountOut = (amountIn * EXCHANGE_RATE_1e18) / 1e18.
+    // Example: 1 USDC = 2 HTK => EXCHANGE_RATE_1e18 = 2e18.
+    uint256 constant EXCHANGE_RATE_1e18 = 2e18; // 1 USDC = 2 HTK (1e18-scaled)
 
     event Deposited(address indexed token, address indexed depositor, uint256 amount, uint256 timestamp);
 
@@ -57,7 +60,7 @@ contract TreasuryTest is Test {
         unauthorized = makeAddr("unauthorized");
 
         // Deploy mock tokens
-        htkToken = new MockERC20("HTK Token", "HTK", 18);
+        htkToken = new MockERC20("HTK Token", "HTK", 6);
         usdcToken = new MockERC20("USDC Token", "USDC", 6);
 
         // Deploy mock Saucerswap router
@@ -79,7 +82,7 @@ contract TreasuryTest is Test {
         usdcToken.mint(address(treasury), 10_000e6);
 
         // Setup exchange rate
-        saucerswapRouter.setExchangeRate(address(usdcToken), address(htkToken), EXCHANGE_RATE);
+        saucerswapRouter.setExchangeRate(address(usdcToken), address(htkToken), EXCHANGE_RATE_1e18);
 
         // Deploy MockRelay
         mockRelay = new MockRelay(address(treasury));
@@ -229,7 +232,7 @@ contract TreasuryTest is Test {
 
     function test_BuybackAndBurn() public {
         uint256 buybackAmount = 1000e6;
-        uint256 expectedHtk = 2000e18; // 1000 USDC * 2 = 2000 HTK
+        uint256 expectedHtk = 2000e6; // 1000 USDC * 2 = 2000 HTK
         uint256 deadline = block.timestamp + 3600;
 
         vm.expectEmit(true, false, false, true);
@@ -247,10 +250,9 @@ contract TreasuryTest is Test {
     function testFuzz_BuybackAndBurn(uint256 amount) public {
         vm.assume(amount > 0 && amount <= 10_000e6);
 
-        // amount is in smallest units of USDC (6 decimals). Router computes
-        // amountOut = amountIn * EXCHANGE_RATE / 10^decimals(tokenIn).
-        // Since USDC has 6 decimals, divide by 1e6 here to match router logic.
-        uint256 expectedHtk = (amount * EXCHANGE_RATE) / 1e6;
+        // amount is in smallest units of USDC (6 decimals). With matching decimals (6->6),
+        // router computes amountOut = (amountIn * EXCHANGE_RATE_1e18) / 1e18.
+        uint256 expectedHtk = (amount * EXCHANGE_RATE_1e18) / 1e18;
         uint256 deadline = block.timestamp + 3600;
 
         mockRelay.executeBuybackAndBurn(address(usdcToken), amount, expectedHtk, deadline);
@@ -259,7 +261,7 @@ contract TreasuryTest is Test {
     }
 
     function test_RevertWhen_BuybackHTKForHTK() public {
-        uint256 buybackAmount = 1000e18;
+        uint256 buybackAmount = 1000e6;
         uint256 deadline = block.timestamp + 3600;
 
         vm.expectRevert(bytes("Treasury: Cannot swap HTK for HTK"));
@@ -322,7 +324,7 @@ contract TreasuryTest is Test {
 
         // 2. Relay executes buyback and burn
         uint256 buybackAmount = 3000e6;
-        uint256 expectedHtk = 6000e18;
+        uint256 expectedHtk = 6000e6;
         uint256 deadline = block.timestamp + 3600;
 
         mockRelay.executeBuybackAndBurn(address(usdcToken), buybackAmount, expectedHtk, deadline);
@@ -342,7 +344,7 @@ contract TreasuryTest is Test {
 
         mockRelay.executeBuybackAndBurn(address(usdcToken), buybackAmount2, 0, deadline);
 
-        uint256 totalBurned = 6000e18; // (1000 + 2000) * 2
+        uint256 totalBurned = 6000e6; // (1000 + 2000) * 2
         assertEq(htkToken.balanceOf(address(0xdead)), totalBurned);
     }
 
@@ -363,7 +365,7 @@ contract TreasuryTest is Test {
 
     function test_Swap_USDCToHTK() public {
         uint256 amountIn = 1000e6;
-        uint256 expectedOut = 2000e18; // 1000 USDC * 2 = 2000 HTK
+        uint256 expectedOut = 2000e6; // 1000 USDC * 2 = 2000 HTK
         uint256 deadline = block.timestamp + 3600;
 
         vm.expectEmit(true, true, true, true);
@@ -382,7 +384,8 @@ contract TreasuryTest is Test {
 
     function testFuzz_Swap_USDCToHTK(uint256 amount) public {
         vm.assume(amount > 0 && amount <= 10_000e6);
-        uint256 expectedOut = (amount * EXCHANGE_RATE) / 1e6;
+        // With 6→6 decimals and EXCHANGE_RATE_1e18 scaled by 1e18, router computes: amountOut = (amountIn * EXCHANGE_RATE_1e18) / 1e18
+        uint256 expectedOut = (amount * EXCHANGE_RATE_1e18) / 1e18;
         uint256 deadline = block.timestamp + 3600;
 
         uint256 outBefore = htkToken.balanceOf(address(treasury));
@@ -420,5 +423,57 @@ contract TreasuryTest is Test {
         uint256 deadline = block.timestamp + 3600;
         vm.expectRevert(bytes("Treasury: Invalid token"));
         mockRelay.executeSwap(address(0), address(htkToken), amountIn, 0, deadline);
+    }
+
+    /* ============ Different Decimals Swap Tests ============ */
+
+    function test_Swap_18To6_Decimals() public {
+        // Create 18-decimal token (e.g., WETH)
+        MockERC20 weth = new MockERC20("Wrapped ETH", "WETH", 18);
+
+        // Fund Treasury with WETH18 and Router with HTK6
+        uint256 wethTreasuryAmount = 10_000e18;
+        weth.mint(address(treasury), wethTreasuryAmount);
+        // htkToken already funded to router in setUp
+
+        // Set exchange rate: 1 WETH = 2 HTK (1e18-scaled)
+        saucerswapRouter.setExchangeRate(address(weth), address(htkToken), EXCHANGE_RATE_1e18);
+
+        uint256 amountIn = 1e18; // 1 WETH
+        // Compute expected out using min-dec normalization
+        // min(decimals) = 6; adjustedIn = amountIn / 1e12; amountOutUnits = adjustedIn * rate / 1e18; amountOut = amountOutUnits
+        uint256 expectedOut = ((amountIn / (10 ** (18 - 6))) * EXCHANGE_RATE_1e18) / 1e18;
+        uint256 deadline = block.timestamp + 3600;
+
+        uint256 outBefore = htkToken.balanceOf(address(treasury));
+        uint256 ret = mockRelay.executeSwap(address(weth), address(htkToken), amountIn, expectedOut, deadline);
+        uint256 outAfter = htkToken.balanceOf(address(treasury));
+
+        assertEq(ret, expectedOut);
+        assertEq(outAfter - outBefore, expectedOut);
+    }
+
+    function test_Swap_6To18_Decimals() public {
+        // Create 18-decimal token (e.g., WETH)
+        MockERC20 weth = new MockERC20("Wrapped ETH", "WETH", 18);
+
+        // Fund Router with WETH18 and Treasury has USDC6 already
+        uint256 wethRouterAmount = 1_000_000e18;
+        weth.mint(address(saucerswapRouter), wethRouterAmount);
+
+        // Set exchange rate: 1 USDC = 2 WETH (1e18-scaled)
+        saucerswapRouter.setExchangeRate(address(usdcToken), address(weth), EXCHANGE_RATE_1e18);
+
+        uint256 amountIn = 1e6; // 1 USDC
+        // min(decimals) = 6; adjustedIn = amountIn; amountOutUnits = adjustedIn * rate / 1e18; amountOut = amountOutUnits * 1e12
+        uint256 expectedOut = (((amountIn) * EXCHANGE_RATE_1e18) / 1e18) * (10 ** (18 - 6));
+        uint256 deadline = block.timestamp + 3600;
+
+        uint256 outBefore = weth.balanceOf(address(treasury));
+        uint256 ret = mockRelay.executeSwap(address(usdcToken), address(weth), amountIn, expectedOut, deadline);
+        uint256 outAfter = weth.balanceOf(address(treasury));
+
+        assertEq(ret, expectedOut);
+        assertEq(outAfter - outBefore, expectedOut);
     }
 }

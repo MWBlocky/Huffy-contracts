@@ -44,15 +44,15 @@ contract DeployMocks is Script {
         MockSaucerswapRouter router = new MockSaucerswapRouter();
         console.log("Saucerswap Router:", address(router));
 
-        // Fund router with HTK
+        // Fund router with HTK (HTK has 18 decimals)
         uint256 routerHtkSupply = 5_000_000e18; // 5M HTK
         htkToken.mint(address(router), routerHtkSupply);
         console.log("Funded router with", routerHtkSupply / 1e18, "HTK");
 
-        // Set exchange rate (1 USDC = 2 HTK)
-        uint256 exchangeRate = 2e18;
+        // Set exchange rate (1 USDC = 2 HTK). Note: rate is 1e18-scaled (fixed-point), independent of token decimals.
+        uint256 exchangeRate = 2e18; // 1e18-scaled
         router.setExchangeRate(address(usdcToken), address(htkToken), exchangeRate);
-        console.log("Set exchange rate: 1 USDC = 2 HTK");
+        console.log("Set exchange rate: 1 USDC = 2 HTK (rate 2e18)");
 
         // 4. Deploy Mock DAO (to serve as DAO admin address)
         console.log("\n4. Deploying Mock DAO (admin)...");

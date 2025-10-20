@@ -379,6 +379,17 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     /**
+     * @notice Get the maximum allowed trade amount for a given input token under current settings
+     * @dev Computed as (Treasury balance of tokenIn) * maxTradeBps / 10000
+     * @param tokenIn Address of input token
+     * @return maxAllowedAmount Maximum amount allowed for a single trade
+     */
+    function getMaxAllowedTradeAmount(address tokenIn) external view returns (uint256 maxAllowedAmount) {
+        uint256 treasuryBalance = TREASURY.getBalance(tokenIn);
+        maxAllowedAmount = (treasuryBalance * maxTradeBps) / 10000;
+    }
+
+    /**
      * @notice Calculate remaining cooldown time
      * @return remaining seconds until next trade allowed (0 if ready)
      */
