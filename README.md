@@ -136,25 +136,18 @@ forge script script/Treasury.s.sol:DeployTreasury \
 
 1. Deploy PairWhitelist:
 ```bash
-forge create src/PairWhitelist.sol:PairWhitelist \
-  --constructor-args $DAO_ADMIN_ADDRESS \
+forge script script/PairWhitelist.s.sol:DeployPairWhitelist \
   --rpc-url $HEDERA_RPC_URL \
-  --private-key $PRIVATE_KEY
+  --private-key $PRIVATE_KEY \
+  --broadcast -vv
 ```
 
 2. Deploy Relay:
 ```bash
-forge create src/Relay.sol:Relay \
-  --constructor-args \
-    $PAIR_WHITELIST_ADDRESS \
-    $TREASURY_ADDRESS \
-    $DAO_ADMIN_ADDRESS \
-    $INITIAL_TRADER_ADDRESS \
-    $MAX_TRADE_BPS \
-    $MAX_SLIPPAGE_BPS \
-    $TRADE_COOLDOWN_SEC \
+forge script script/Relay.s.sol:DeployRelay \
   --rpc-url $HEDERA_RPC_URL \
-  --private-key $PRIVATE_KEY
+  --private-key $PRIVATE_KEY \
+  --broadcast -vv
 ```
 
 3. Update Treasury to use new Relay:
