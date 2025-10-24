@@ -7,13 +7,9 @@ import {Relay} from "../src/Relay.sol";
 
 contract DeployRelay is Script {
     function run() external {
-        // Load environment variables
         address pairWhitelist = vm.envAddress("PAIR_WHITELIST_ADDRESS");
         address treasury = vm.envAddress("TREASURY_ADDRESS");
-        address saucerswapRouter = vm.envOr(
-            "SAUCERSWAP_ROUTER",
-            address(0x00000000000000000000000000000000001A9B39) // Hedera Testnet Saucerswap Router
-        );
+        address saucerswapRouter = vm.envAddress("SAUCERSWAP_ROUTER");
         address daoAdmin = vm.envOr("DAO_ADMIN_ADDRESS", msg.sender);
 
         // Parse initial traders (comma-separated addresses)

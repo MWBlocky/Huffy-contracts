@@ -7,7 +7,6 @@ import {PairWhitelist} from "../src/PairWhitelist.sol";
 
 contract DeployPairWhitelist is Script {
     function run() external {
-        // Load environment variables
         address daoAdmin = vm.envOr("DAO_ADMIN_ADDRESS", msg.sender);
 
         console.log("Deployer:", msg.sender);

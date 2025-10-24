@@ -105,31 +105,84 @@ forge coverage
 
 ### Option 1: Testing Environment (Mocks)
 
-Deploy complete test environment with mock tokens and router:
-
 ```bash
-forge script script/DeployMocks.s.sol:DeployMocks \
+forge script script/HTKmock.s.sol:HTKMock \
   --rpc-url $HEDERA_RPC_URL \
   --private-key $PRIVATE_KEY \
-  --broadcast -vv
+  --broadcast
+```
+---
+```bash
+forge script script/USDCmock.s.sol:USDCMock \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+---
+```
+source .env
+```
+`HTK_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, PRIVATE_KEY`
+```bash
+forge script script/SaucerswapMock.s.sol:SaucerswapMock \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast \
+  --slow
+```
+---
+```
+source .env
+```
+`HTK_TOKEN_ADDRESS, SAUCERSWAP_ROUTER, DAO_ADMIN_ADDRESS, RELAY_ADDRESS`
+```bash
+forge script script/Treasury.s.sol:DeployTreasury \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+---
+```
+source .env
+```
+`DAO_ADMIN_ADDRESS`
+```bash
+forge script script/PairWhitelist.s.sol:DeployPairWhitelist \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+---
+```
+source .env
+```
+`PAIR_WHITELIST_ADDRESS, TREASURY_ADDRESS, SAUCERSWAP_ROUTER, DAO_ADMIN_ADDRESS, INITIAL_TRADERS, MAX_TRADE_BPS, MAX_SLIPPAGE_BPS, TRADE_COOLDOWN_SEC`
+```bash
+forge script script/Relay.s.sol:DeployRelay \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+---
+```
+source .env
+```
+`TREASURY_ADDRESS, RELAY_ADDRESS`
+```bash
+forge script script/DAOmock.s.sol:MockDAOScript \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast \
+  --slow
 ```
 
-This deploys:
-- Mock HTK and USDC tokens
-- Mock Saucerswap Router
-- Mock DAO (admin)
-- Treasury (with mocks)
-- Mock Relay
-
 ### Option 2: Production Deployment
-
-Deploy production Treasury with real tokens:
 
 ```bash
 forge script script/Treasury.s.sol:DeployTreasury \
   --rpc-url $HEDERA_RPC_URL \
   --private-key $PRIVATE_KEY \
-  --broadcast -vv
+  --broadcast
 ```
 
 ### Deploy Relay System
@@ -139,7 +192,7 @@ forge script script/Treasury.s.sol:DeployTreasury \
 forge script script/PairWhitelist.s.sol:DeployPairWhitelist \
   --rpc-url $HEDERA_RPC_URL \
   --private-key $PRIVATE_KEY \
-  --broadcast -vv
+  --broadcast
 ```
 
 2. Deploy Relay:
@@ -147,7 +200,7 @@ forge script script/PairWhitelist.s.sol:DeployPairWhitelist \
 forge script script/Relay.s.sol:DeployRelay \
   --rpc-url $HEDERA_RPC_URL \
   --private-key $PRIVATE_KEY \
-  --broadcast -vv
+  --broadcast
 ```
 
 3. Update Treasury to use new Relay:
