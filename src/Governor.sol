@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { Governor } from "../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
 import { TimelockController } from  "../lib/openzeppelin-contracts/contracts/governance/TimelockController.sol";
 
-contract SimpleGovernor is Governor {
+contract HuffyGovernor is Governor {
     TimelockController public timelock;
 
     constructor(string memory name_, TimelockController timelock_) Governor(name_) {
