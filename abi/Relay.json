@@ -1,0 +1,2424 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_pairWhitelist",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_treasury",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_saucerswapRouter",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_admin",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_initialTraders",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_maxTradeBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_maxSlippageBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_tradeCooldownSec",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "DAO_ROLE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "DEFAULT_ADMIN_ROLE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "PAIR_WHITELIST",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract PairWhitelist"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "SAUCERSWAP_ROUTER",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract ISaucerswapRouter"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "TRADER_ROLE",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "TREASURY",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract Treasury"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "authorizeTrader",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getCooldownRemaining",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getMaxAllowedTradeAmount",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maxAllowedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRiskParameters",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "_maxTradeBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_maxSlippageBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_tradeCooldownSec",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_lastTradeTimestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getRoleAdmin",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "grantRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "hasRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastTradeTimestamp",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxSlippageBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxTradeBps",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "proposeBuybackAndBurn",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "burnedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "proposeSwap",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAmountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "deadline",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "renounceRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "callerConfirmation",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revokeRole",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "revokeTrader",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setMaxSlippageBps",
+      "inputs": [
+        {
+          "name": "newMaxSlippageBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setMaxTradeBps",
+      "inputs": [
+        {
+          "name": "newMaxTradeBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setTradeCooldownSec",
+      "inputs": [
+        {
+          "name": "newTradeCooldownSec",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "supportsInterface",
+      "inputs": [
+        {
+          "name": "interfaceId",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tradeCooldownSec",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "MaxSlippageBpsUpdated",
+      "inputs": [
+        {
+          "name": "oldValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MaxTradeBpsUpdated",
+      "inputs": [
+        {
+          "name": "oldValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleAdminChanged",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "previousAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "newAdminRole",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleGranted",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RoleRevoked",
+      "inputs": [
+        {
+          "name": "role",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "sender",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TradeApproved",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tradeType",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "enum Relay.TradeType"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAmountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "treasuryBalance",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxTradeBps",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxSlippageBps",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TradeCooldownSecUpdated",
+      "inputs": [
+        {
+          "name": "oldValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newValue",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TradeForwarded",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tradeType",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "enum Relay.TradeType"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "amountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TradeProposed",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tradeType",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "enum Relay.TradeType"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAmountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TradeRejected",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "reason",
+          "type": "uint8",
+          "indexed": true,
+          "internalType": "enum Relay.RejectionReason"
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "minAmountOut",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxTradeBps",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxSlippageBps",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "cooldownRemaining",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TraderAuthorized",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TraderRevoked",
+      "inputs": [
+        {
+          "name": "trader",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "AccessControlBadConfirmation",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "AccessControlUnauthorizedAccount",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "neededRole",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CooldownNotElapsed",
+      "inputs": [
+        {
+          "name": "remaining",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "required",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ExceedsMaxSlippage",
+      "inputs": [
+        {
+          "name": "implied",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxAllowed",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ExceedsMaxTradeSize",
+      "inputs": [
+        {
+          "name": "requested",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxAllowed",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "maxTradeBps",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InsufficientTreasuryBalance",
+      "inputs": [
+        {
+          "name": "available",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "requested",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InvalidParameters",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "PairNotWhitelisted",
+      "inputs": [
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "tokenOut",
+          "type": "address",
+          "internalType": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ReentrancyGuardReentrantCall",
+      "inputs": []
+    }
+  ],
+  "bytecode": {
+    "object": "0x604060e081523461044d57611e92908138038061001b81610465565b93843982016101008382031261044d576100348361048a565b60209061004282860161048a565b9261004e85870161048a565b9361005b6060880161048a565b608088015190976001600160401b0393909184811161044d57820181601f8201121561044d578051948511610451578460051b90878061009c818501610465565b80988152019282010192831161044d5787809101915b838310610435575050505060a081015160c082015160e0909201516001808055976001600160a01b039691949187169182156103f15787169081156103ad57871691821561036957878c1615610325578651156102e15761271080851161029d5785116102595760805260a05260c0526002556003556004908155956101419061013b816104c6565b50610532565b505f845b61019d575b85516117e9908161066982396080518181816107650152610fe6015260a051818181610232015281816104300152818161095d01528181610ace0152611056015260c0518181816102c801526116420152f35b815181101561025457826101b1828461049e565b511615610211579584876101d2856101cb849a9b8761049e565b51166105d0565b50846101de828661049e565b51167fc83da1d5e2f1980ac7d406b167deadbaea0c16ae7cf9990923c4b52fde147d15878b51428152a201909695610145565b855162461bcd60e51b8152808801859052601560248201527f52656c61793a20496e76616c69642074726164657200000000000000000000006044820152606490fd5b61014a565b8a5162461bcd60e51b8152600481018a9052601d60248201527f52656c61793a20496e76616c6964206d6178536c6970706167654270730000006044820152606490fd5b8b5162461bcd60e51b8152600481018b9052601a60248201527f52656c61793a20496e76616c6964206d617854726164654270730000000000006044820152606490fd5b8a5162461bcd60e51b8152600481018a9052601960248201527f52656c61793a204e6f20696e697469616c2074726164657273000000000000006044820152606490fd5b8a5162461bcd60e51b8152600481018a9052601460248201527f52656c61793a20496e76616c69642061646d696e0000000000000000000000006044820152606490fd5b8a5162461bcd60e51b8152600481018a9052601560248201527f52656c61793a20496e76616c696420726f7574657200000000000000000000006044820152606490fd5b8a5162461bcd60e51b8152600481018a9052601760248201527f52656c61793a20496e76616c69642074726561737572790000000000000000006044820152606490fd5b8a5162461bcd60e51b8152600481018a9052601860248201527f52656c61793a20496e76616c69642077686974656c69737400000000000000006044820152606490fd5b81906104408461048a565b81520191019087906100b2565b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b6040519190601f01601f191682016001600160401b0381118382101761045157604052565b51906001600160a01b038216820361044d57565b80518210156104b25760209160051b010190565b634e487b7160e01b5f52603260045260245ffd5b6001600160a01b03165f8181525f80516020611e72833981519152602052604090205460ff1661052d575f8181525f80516020611e7283398151915260205260408120805460ff191660011790553391905f80516020611e528339815191528180a4600190565b505f90565b6001600160a01b03165f8181527fc39f11a9300b508470eaed31f5842ba08c93181bcbe6a7fe34039aa7f2b8074260205260409020547f3b5d4cc60d3ec3516ee8ae083bd60934f6eb2a6c54b1229985c41bfb092b2603919060ff166105ca57815f525f60205260405f20815f5260205260405f20600160ff1982541617905533915f80516020611e528339815191525f80a4600190565b50505f90565b6001600160a01b03165f8181527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020547ffacaf2747a7486cf5730e9265973fb54447d3ace6e7e4711f6360826b0731941919060ff166105ca57815f525f60205260405f20815f5260205260405f20600160ff1982541617905533915f80516020611e528339815191525f80a460019056fe6080604081815260049182361015610015575f80fd5b5f3560e01c90816301ffc9a714610d3a57508063158bf33714610a8057806319f18dee14610a62578063248a9ca314610a3957806325fc1b3d1461098c5780632d2c5565146109495780632d89fd5d146109265780632f2ff15d146108fe57806336568abe146108ba5780634656988b1461089c57806357b79a23146107f85780635ce942ee1461079457806360ffe87e146107515780636a418fcb146106ee57806371e63012146106d257806391d148541461068f578063a217fddf14610675578063ba94626c1461063f578063c4aa739514610621578063d1b092a714610393578063d547741f14610358578063e9c265181461031e578063f0a56fc8146102f7578063fb5a252d146102b4578063fc72a61a146101ee5763ff3a24d41461013d575f80fd5b346101ea5760203660031901126101ea578135610158610eff565b61271081116101a7576002805490829055915191825260208201524260408201527f6ad4144e3c81c05e8f317a58e7af16b18f4751ebf9c4345ebe4145c9ec718f85915080606081015b0390a1005b815162461bcd60e51b8152602081850152601a60248201527f52656c61793a20496e76616c6964206d617854726164654270730000000000006044820152606490fd5b5f80fd5b50346101ea57602091826003193601126101ea578261020b610d8c565b835163f8b2cb4f60e01b81526001600160a01b0391821693810193909352829060249082907f0000000000000000000000000000000000000000000000000000000000000000165afa9081156102aa575f9161027b575b506102736127109160025490610e86565b049051908152f35b90508281813d83116102a3575b6102928183610db8565b810103126101ea5751610273610262565b503d610288565b82513d5f823e3d90fd5b50346101ea575f3660031901126101ea57517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b50346101ea575f3660031901126101ea57602090515f805160206117748339815191528152f35b50346101ea575f3660031901126101ea57602090517f3b5d4cc60d3ec3516ee8ae083bd60934f6eb2a6c54b1229985c41bfb092b26038152f35b50346101ea57806003193601126101ea57610391913561038c600161037b610da2565b93835f525f6020525f200154610f5a565b611513565b005b50346101ea5760a03660031901126101ea576103ad610d8c565b906103b6610da2565b60643591906044356103c6610e99565b6103ce610f7b565b82516001600160a01b0383811682526020820183905260408201869052426060830152868116979188905f9033907f3c993baaca991e07eb2a2feede42d2f71d57515b7c18dcc2cb01b5445896760e90608090a461042e8684868a610f9e565b7f0000000000000000000000000000000000000000000000000000000000000000169084519763f8b2cb4f60e01b8952818901526020978881602481865afa9081156106175788859389898d97958a955f916105d5575b50857f49a57059450b0fce801b6cee682f79b6098aeb25389bded901677399b8108df6610520948a6104cd895f9a99978b97600254906003549251968796339a429689610dee565b0390a3426005558a51631dbae25960e21b81526001600160a01b0393841691810191825292909416602085015260408401959095526060830199909952608435608083015288938492839160a090910190565b03925af19384156105cb575f94610598575b5082516001600160a01b03958616815294909116602085015260408401526060830182905242608084015290915f9033907fff622c9950b77a7bfb4fafbd95735ca35b6dd088aa028764d60ef1ab070c6e88908060a081015b0390a36001805551908152f35b909293508581813d83116105c4575b6105b18183610db8565b810103126101ea5751929161058b610532565b503d6105a7565b83513d5f823e3d90fd5b9750505050948092508491503d8311610610575b6105f38183610db8565b810103126101ea579051889284929186918a918a908a9085610485565b503d6105e9565b86513d5f823e3d90fd5b50346101ea575f3660031901126101ea576020906003549051908152f35b50346101ea575f3660031901126101ea576080916002549160035491549060055492815194855260208501528301526060820152f35b50346101ea575f3660031901126101ea57602090515f8152f35b50346101ea57806003193601126101ea576020916106ab610da2565b90355f525f8352815f209060018060a01b03165f52825260ff815f20541690519015158152f35b50346101ea575f3660031901126101ea57602091549051908152f35b50346101ea5760203660031901126101ea577f58a973300efb4582e6dcdc0429cf2fc9ce1aa3b14f7f0aa4cfcee3e8316c524d602061072b610d8c565b92610734610eff565b61073d8461147d565b50514281526001600160a01b0390931692a2005b50346101ea575f3660031901126101ea57517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b5090346101ea5760203660031901126101ea577f35f15adf7ec3a5fd78617f42a40f5278c2aa52b2bf949e793b6545dbe8f43e7a916101a28235916107d7610eff565b83549383905551928352602083019190915242604083015281906060820190565b50346101ea5760203660031901126101ea57610812610d8c565b61081a610eff565b6001600160a01b03811692831561086157507fc83da1d5e2f1980ac7d406b167deadbaea0c16ae7cf9990923c4b52fde147d159161085960209261136f565b5051428152a2005b606490602084519162461bcd60e51b835282015260156024820152742932b630bc9d1024b73b30b634b2103a3930b232b960591b6044820152fd5b50346101ea575f3660031901126101ea576020906002549051908152f35b50346101ea57806003193601126101ea576108d3610da2565b90336001600160a01b038316036108ef57506103919135611513565b5163334bd91960e11b81529050fd5b50346101ea57806003193601126101ea576103919135610921600161037b610da2565b611407565b50346101ea575f3660031901126101ea57602090610942610e50565b9051908152f35b50346101ea575f3660031901126101ea57517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b50346101ea5760203660031901126101ea5781356109a8610eff565b61271081116109f6576003805490829055915191825260208201524260408201527fd3c08aa85ce388917b57892b77bf83c8301fdfeebd24f6fb77991cd67bb65765915080606081016101a2565b815162461bcd60e51b8152602081850152601d60248201527f52656c61793a20496e76616c6964206d6178536c6970706167654270730000006044820152606490fd5b50346101ea5760203660031901126101ea57602091355f525f82526001815f2001549051908152f35b50346101ea575f3660031901126101ea576020906005549051908152f35b5090346101ea5760803660031901126101ea57610a9b610d8c565b9060243592604435610aab610e99565b610ab3610f7b565b81516327b57cdd60e01b815260209590916001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081169088858881855afa948515610617575f95610d02575b5085516001600160a01b0386168152602081018590526040810184905242606082015290881690819060019033907f3c993baaca991e07eb2a2feede42d2f71d57515b7c18dcc2cb01b5445896760e90608090a4610b658385878b610f9e565b85519063f8b2cb4f60e01b8252878201528881602481855afa908115610617578489888c96959489945f91610cc3575b5092610bd87f49a57059450b0fce801b6cee682f79b6098aeb25389bded901677399b8108df693889360019796600254906003549251968796339a429689610dee565b0390a342600555855163458b285160e11b81526001600160a01b0389169781019788526020880185905260408801929092526064356060880152909586919082905f90829060800103925af19384156105cb575f94610c90575b5082516001600160a01b039586168152949091166020850152604084015260608301829052426080840152909160019033907fff622c9950b77a7bfb4fafbd95735ca35b6dd088aa028764d60ef1ab070c6e88908060a0810161058b565b909293508581813d8311610cbc575b610ca98183610db8565b810103126101ea5751929161058b610c32565b503d610c9f565b9794505050505083813d8311610cfb575b610cde8183610db8565b810103126101ea579151889290859085908a908990610bd8610b95565b503d610cd4565b9094508881813d8311610d33575b610d1a8183610db8565b810103126101ea575184811681036101ea57935f610b05565b503d610d10565b83346101ea5760203660031901126101ea57359063ffffffff60e01b82168092036101ea57602091637965db0b60e01b8114908115610d7b575b5015158152f35b6301ffc9a760e01b14905083610d74565b600435906001600160a01b03821682036101ea57565b602435906001600160a01b03821682036101ea57565b90601f8019910116810190811067ffffffffffffffff821117610dda57604052565b634e487b7160e01b5f52604160045260245ffd5b949198979693909260e0969361010087019a60018060a01b03809216885216602087015260408601526060850152608084015260a083015260c08201520152565b91908203918211610e3c57565b634e487b7160e01b5f52601160045260245ffd5b6005548015610e8157610e639042610e2f565b6004549081811015610e7b57610e7891610e2f565b90565b50505f90565b505f90565b81810292918115918404141715610e3c57565b335f9081527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020545f805160206117748339815191529060ff1615610ee15750565b6044906040519063e2517d3f60e01b82523360048301526024820152fd5b335f9081527fc39f11a9300b508470eaed31f5842ba08c93181bcbe6a7fe34039aa7f2b8074260205260409020547f3b5d4cc60d3ec3516ee8ae083bd60934f6eb2a6c54b1229985c41bfb092b26039060ff1615610ee15750565b805f525f60205260405f20335f5260205260ff60405f20541615610ee15750565b600260015414610f8c576002600155565b604051633ee5aeb560e01b8152600490fd5b92905f9160055480611341575b506040805163c5924e9d60e01b81526001600160a01b03878116600480840191909152858216602484015297929692916020919082816044817f000000000000000000000000000000000000000000000000000000000000000086165afa908115611337575f91611301575b501561129e5780831680158015611294575b801561128c575b8015611284575b61124457829060248b8b51948593849263f8b2cb4f60e01b84528301527f0000000000000000000000000000000000000000000000000000000000000000165afa91821561123a575f9261120c575b50508281106111c15761271061109f6002548093610e86565b0480841161116257506110b4848487856115a9565b906003549182811161111a5750866110d157505050505050505050565b604499506003959492875f8051602061179483398151915295936110fe938b51968796339a429689610dee565b0390a382549151636cde584b60e11b8152928301526024820152fd5b95929361114960029584995f80516020611794833981519152958c999560449e9d51968796339a429689610dee565b0390a3516313a47ed560e31b8152928301526024820152fd5b876001875f8051602061179483398151915287988d986111936111bd998e6003548b8a51968796339a429689610dee565b0390a35163a7f6835360e01b81529384019485526020850152604084015290918291606090910190565b0390fd5b90876044955f805160206117948339815191528883976111f38c966002549360035489519586958d339a429689610dee565b0390a351630207d7f360e41b8152928301526024820152fd5b90809250813d8311611233575b6112238183610db8565b810103126101ea57515f80611086565b503d611219565b88513d5f823e3d90fd5b505050906112745f805160206117948339815191529392600596600254600354908a51968796339a429689610dee565b0390a351630e52390960e41b8152fd5b508515611037565b508415611030565b5081871615611029565b505096505f805160206117948339815191526111bd9593945f936112d38a60025493600354895195869533998d429689610dee565b0390a3516337a80a5560e21b81526001600160a01b0394851693810193845293166020830152829160400190565b90508281813d8311611330575b6113188183610db8565b810103126101ea575180151581036101ea575f611017565b503d61130e565b89513d5f823e3d90fd5b61134b9042610e2f565b60045480821061135c575b50610fab565b611367929450610e2f565b915f80611356565b6001600160a01b03165f8181527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020545f80516020611774833981519152919060ff16610e7b57815f525f60205260405f20815f5260205260405f20600160ff1982541617905533917f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d5f80a4600190565b90815f525f60205260405f209060018060a01b031690815f5260205260ff60405f205416155f14610e7b57815f525f60205260405f20815f5260205260405f20600160ff1982541617905533917f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d5f80a4600190565b6001600160a01b03165f8181527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020545f80516020611774833981519152919060ff1615610e7b57815f525f60205260405f20815f5260205260405f2060ff19815416905533917ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b5f80a4600190565b90815f525f60205260405f209060018060a01b031690815f5260205260ff60405f2054165f14610e7b57815f525f60205260405f20815f5260205260405f2060ff19815416905533917ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b5f80a4600190565b8051600110156115955760400190565b634e487b7160e01b5f52603260045260245ffd5b9091604091825190606082019467ffffffffffffffff9583811087821117610dda578552600283526020938484019186368437845115611595576001600160a01b03938416835290939190836115fe84611585565b91169052855193849263d06ca61f60e01b845260448401916004850152876024850152518091526064830191905f5b8782821061175a57505050509181805f9403917f0000000000000000000000000000000000000000000000000000000000000000165afa928315611751575f936116c5575b50505061167f9150611585565b519081811015610e7b576116939082610e2f565b61271090818102918183041490151715610e3c5781156116b1570490565b634e487b7160e01b5f52601260045260245ffd5b909192503d805f843e6116d88184610db8565b82019183818403126101ea578051908582116101ea570182601f820112156101ea578051948511610dda578460051b91519461171685840187610db8565b855283808601928201019283116101ea578301905b828210611742575050505061167f905f8080611672565b8151815290830190830161172b565b513d5f823e3d90fd5b835187168552879550938401939092019160010161162d56fefacaf2747a7486cf5730e9265973fb54447d3ace6e7e4711f6360826b073194198617852019876170931154393694db8ba089796a34ceccc19096b707647d745a2646970667358221220c756d21648cda242f3497ac195ce4879d61aa615bd15e8a8ab986f6356be5c3f64736f6c634300081900332f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0dad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5",
+    "sourceMap": "633:16752:31:-:0;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;633:16752:31;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;633:16752:31;;;;;;;4114:28;;633:16752;;;;4189:23;;;633:16752;;;;4258:31;;;633:16752;;;;;4333:20;633:16752;;;;4396:26;633:16752;;4486:5;4470:21;;;633:16752;;4540:24;;633:16752;;;4609:46;633:16752;4665:30;633:16752;4705:56;4772:26;633:16752;4808:32;633:16752;4850:36;633:16752;;;4850:36;4945:28;;4897:38;4609:46;4897:38;:::i;:::-;;4945:28;:::i;:::-;-1:-1:-1;;4989:13:31;633:16752;;;4984:273;633:16752;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;5032:3;633:16752;;5004:26;;;;;5059:18;;;;;:::i;:::-;723:21;633:16752;5059:32;723:21;;5155:18;;;5131:43;5155:18;;;;;;;:::i;:::-;723:21;633:16752;5131:43;:::i;:::-;;5210:18;;;;;:::i;:::-;723:21;633:16752;5193:53;633:16752;;;5230:15;788:24;;5193:53;723:21;4989:13;;;;;723:21;633:16752;;-1:-1:-1;;;723:21:31;;;;;;;;;;;;633:16752;723:21;633:16752;;;723:21;;;;5004:26;;;633:16752;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;-1:-1:-1;633:16752:31;;;;;;-1:-1:-1;633:16752:31;;;;;-1:-1:-1;633:16752:31;;;;;;;;-1:-1:-1;;633:16752:31;;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;:::o;:::-;;;-1:-1:-1;;;;;633:16752:31;;;;;;:::o;723:21::-;633:16752;;723:21;;;;;;;;;;;;:::o;:::-;633:16752;;;723:21;;;;;;;;6155:316:15;-1:-1:-1;;;;;633:16752:31;4140:1;633:16752;;;-1:-1:-1;;;;;;;;;;;633:16752:31;;;;;;;;;;4140:1;633:16752;;;-1:-1:-1;;;;;;;;;;;633:16752:31;;;;;;;-1:-1:-1;;633:16752:31;6323:4:15;633:16752:31;;;735:10:25;;633:16752:31;-1:-1:-1;;;;;;;;;;;4140:1:31;;6346:40:15;6323:4;6400:11;:::o;6248:217::-;6442:12;4140:1:31;6442:12:15;:::o;6155:316::-;-1:-1:-1;;;;;633:16752:31;2930:6:15;633:16752:31;;;;;;;;;;723:21;;633:16752;;;;;;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;2930:6:15;633:16752:31;;;;2930:6:15;633:16752:31;6323:4:15;633:16752:31;;;;;;;;735:10:25;6346:40:15;-1:-1:-1;;;;;;;;;;;2930:6:15;6346:40;;6323:4;6400:11;:::o;6248:217::-;6442:12;;2930:6;6442:12;:::o;6155:316::-;-1:-1:-1;;;;;633:16752:31;2930:6:15;633:16752:31;;;;;;;;;;788:24;;633:16752;;;;;;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;2930:6:15;633:16752:31;;;;2930:6:15;633:16752:31;6323:4:15;633:16752:31;;;;;;;;735:10:25;6346:40:15;-1:-1:-1;;;;;;;;;;;2930:6:15;6346:40;;6323:4;6400:11;:::o",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080604081815260049182361015610015575f80fd5b5f3560e01c90816301ffc9a714610d3a57508063158bf33714610a8057806319f18dee14610a62578063248a9ca314610a3957806325fc1b3d1461098c5780632d2c5565146109495780632d89fd5d146109265780632f2ff15d146108fe57806336568abe146108ba5780634656988b1461089c57806357b79a23146107f85780635ce942ee1461079457806360ffe87e146107515780636a418fcb146106ee57806371e63012146106d257806391d148541461068f578063a217fddf14610675578063ba94626c1461063f578063c4aa739514610621578063d1b092a714610393578063d547741f14610358578063e9c265181461031e578063f0a56fc8146102f7578063fb5a252d146102b4578063fc72a61a146101ee5763ff3a24d41461013d575f80fd5b346101ea5760203660031901126101ea578135610158610eff565b61271081116101a7576002805490829055915191825260208201524260408201527f6ad4144e3c81c05e8f317a58e7af16b18f4751ebf9c4345ebe4145c9ec718f85915080606081015b0390a1005b815162461bcd60e51b8152602081850152601a60248201527f52656c61793a20496e76616c6964206d617854726164654270730000000000006044820152606490fd5b5f80fd5b50346101ea57602091826003193601126101ea578261020b610d8c565b835163f8b2cb4f60e01b81526001600160a01b0391821693810193909352829060249082907f0000000000000000000000000000000000000000000000000000000000000000165afa9081156102aa575f9161027b575b506102736127109160025490610e86565b049051908152f35b90508281813d83116102a3575b6102928183610db8565b810103126101ea5751610273610262565b503d610288565b82513d5f823e3d90fd5b50346101ea575f3660031901126101ea57517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b50346101ea575f3660031901126101ea57602090515f805160206117748339815191528152f35b50346101ea575f3660031901126101ea57602090517f3b5d4cc60d3ec3516ee8ae083bd60934f6eb2a6c54b1229985c41bfb092b26038152f35b50346101ea57806003193601126101ea57610391913561038c600161037b610da2565b93835f525f6020525f200154610f5a565b611513565b005b50346101ea5760a03660031901126101ea576103ad610d8c565b906103b6610da2565b60643591906044356103c6610e99565b6103ce610f7b565b82516001600160a01b0383811682526020820183905260408201869052426060830152868116979188905f9033907f3c993baaca991e07eb2a2feede42d2f71d57515b7c18dcc2cb01b5445896760e90608090a461042e8684868a610f9e565b7f0000000000000000000000000000000000000000000000000000000000000000169084519763f8b2cb4f60e01b8952818901526020978881602481865afa9081156106175788859389898d97958a955f916105d5575b50857f49a57059450b0fce801b6cee682f79b6098aeb25389bded901677399b8108df6610520948a6104cd895f9a99978b97600254906003549251968796339a429689610dee565b0390a3426005558a51631dbae25960e21b81526001600160a01b0393841691810191825292909416602085015260408401959095526060830199909952608435608083015288938492839160a090910190565b03925af19384156105cb575f94610598575b5082516001600160a01b03958616815294909116602085015260408401526060830182905242608084015290915f9033907fff622c9950b77a7bfb4fafbd95735ca35b6dd088aa028764d60ef1ab070c6e88908060a081015b0390a36001805551908152f35b909293508581813d83116105c4575b6105b18183610db8565b810103126101ea5751929161058b610532565b503d6105a7565b83513d5f823e3d90fd5b9750505050948092508491503d8311610610575b6105f38183610db8565b810103126101ea579051889284929186918a918a908a9085610485565b503d6105e9565b86513d5f823e3d90fd5b50346101ea575f3660031901126101ea576020906003549051908152f35b50346101ea575f3660031901126101ea576080916002549160035491549060055492815194855260208501528301526060820152f35b50346101ea575f3660031901126101ea57602090515f8152f35b50346101ea57806003193601126101ea576020916106ab610da2565b90355f525f8352815f209060018060a01b03165f52825260ff815f20541690519015158152f35b50346101ea575f3660031901126101ea57602091549051908152f35b50346101ea5760203660031901126101ea577f58a973300efb4582e6dcdc0429cf2fc9ce1aa3b14f7f0aa4cfcee3e8316c524d602061072b610d8c565b92610734610eff565b61073d8461147d565b50514281526001600160a01b0390931692a2005b50346101ea575f3660031901126101ea57517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b5090346101ea5760203660031901126101ea577f35f15adf7ec3a5fd78617f42a40f5278c2aa52b2bf949e793b6545dbe8f43e7a916101a28235916107d7610eff565b83549383905551928352602083019190915242604083015281906060820190565b50346101ea5760203660031901126101ea57610812610d8c565b61081a610eff565b6001600160a01b03811692831561086157507fc83da1d5e2f1980ac7d406b167deadbaea0c16ae7cf9990923c4b52fde147d159161085960209261136f565b5051428152a2005b606490602084519162461bcd60e51b835282015260156024820152742932b630bc9d1024b73b30b634b2103a3930b232b960591b6044820152fd5b50346101ea575f3660031901126101ea576020906002549051908152f35b50346101ea57806003193601126101ea576108d3610da2565b90336001600160a01b038316036108ef57506103919135611513565b5163334bd91960e11b81529050fd5b50346101ea57806003193601126101ea576103919135610921600161037b610da2565b611407565b50346101ea575f3660031901126101ea57602090610942610e50565b9051908152f35b50346101ea575f3660031901126101ea57517f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f35b50346101ea5760203660031901126101ea5781356109a8610eff565b61271081116109f6576003805490829055915191825260208201524260408201527fd3c08aa85ce388917b57892b77bf83c8301fdfeebd24f6fb77991cd67bb65765915080606081016101a2565b815162461bcd60e51b8152602081850152601d60248201527f52656c61793a20496e76616c6964206d6178536c6970706167654270730000006044820152606490fd5b50346101ea5760203660031901126101ea57602091355f525f82526001815f2001549051908152f35b50346101ea575f3660031901126101ea576020906005549051908152f35b5090346101ea5760803660031901126101ea57610a9b610d8c565b9060243592604435610aab610e99565b610ab3610f7b565b81516327b57cdd60e01b815260209590916001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081169088858881855afa948515610617575f95610d02575b5085516001600160a01b0386168152602081018590526040810184905242606082015290881690819060019033907f3c993baaca991e07eb2a2feede42d2f71d57515b7c18dcc2cb01b5445896760e90608090a4610b658385878b610f9e565b85519063f8b2cb4f60e01b8252878201528881602481855afa908115610617578489888c96959489945f91610cc3575b5092610bd87f49a57059450b0fce801b6cee682f79b6098aeb25389bded901677399b8108df693889360019796600254906003549251968796339a429689610dee565b0390a342600555855163458b285160e11b81526001600160a01b0389169781019788526020880185905260408801929092526064356060880152909586919082905f90829060800103925af19384156105cb575f94610c90575b5082516001600160a01b039586168152949091166020850152604084015260608301829052426080840152909160019033907fff622c9950b77a7bfb4fafbd95735ca35b6dd088aa028764d60ef1ab070c6e88908060a0810161058b565b909293508581813d8311610cbc575b610ca98183610db8565b810103126101ea5751929161058b610c32565b503d610c9f565b9794505050505083813d8311610cfb575b610cde8183610db8565b810103126101ea579151889290859085908a908990610bd8610b95565b503d610cd4565b9094508881813d8311610d33575b610d1a8183610db8565b810103126101ea575184811681036101ea57935f610b05565b503d610d10565b83346101ea5760203660031901126101ea57359063ffffffff60e01b82168092036101ea57602091637965db0b60e01b8114908115610d7b575b5015158152f35b6301ffc9a760e01b14905083610d74565b600435906001600160a01b03821682036101ea57565b602435906001600160a01b03821682036101ea57565b90601f8019910116810190811067ffffffffffffffff821117610dda57604052565b634e487b7160e01b5f52604160045260245ffd5b949198979693909260e0969361010087019a60018060a01b03809216885216602087015260408601526060850152608084015260a083015260c08201520152565b91908203918211610e3c57565b634e487b7160e01b5f52601160045260245ffd5b6005548015610e8157610e639042610e2f565b6004549081811015610e7b57610e7891610e2f565b90565b50505f90565b505f90565b81810292918115918404141715610e3c57565b335f9081527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020545f805160206117748339815191529060ff1615610ee15750565b6044906040519063e2517d3f60e01b82523360048301526024820152fd5b335f9081527fc39f11a9300b508470eaed31f5842ba08c93181bcbe6a7fe34039aa7f2b8074260205260409020547f3b5d4cc60d3ec3516ee8ae083bd60934f6eb2a6c54b1229985c41bfb092b26039060ff1615610ee15750565b805f525f60205260405f20335f5260205260ff60405f20541615610ee15750565b600260015414610f8c576002600155565b604051633ee5aeb560e01b8152600490fd5b92905f9160055480611341575b506040805163c5924e9d60e01b81526001600160a01b03878116600480840191909152858216602484015297929692916020919082816044817f000000000000000000000000000000000000000000000000000000000000000086165afa908115611337575f91611301575b501561129e5780831680158015611294575b801561128c575b8015611284575b61124457829060248b8b51948593849263f8b2cb4f60e01b84528301527f0000000000000000000000000000000000000000000000000000000000000000165afa91821561123a575f9261120c575b50508281106111c15761271061109f6002548093610e86565b0480841161116257506110b4848487856115a9565b906003549182811161111a5750866110d157505050505050505050565b604499506003959492875f8051602061179483398151915295936110fe938b51968796339a429689610dee565b0390a382549151636cde584b60e11b8152928301526024820152fd5b95929361114960029584995f80516020611794833981519152958c999560449e9d51968796339a429689610dee565b0390a3516313a47ed560e31b8152928301526024820152fd5b876001875f8051602061179483398151915287988d986111936111bd998e6003548b8a51968796339a429689610dee565b0390a35163a7f6835360e01b81529384019485526020850152604084015290918291606090910190565b0390fd5b90876044955f805160206117948339815191528883976111f38c966002549360035489519586958d339a429689610dee565b0390a351630207d7f360e41b8152928301526024820152fd5b90809250813d8311611233575b6112238183610db8565b810103126101ea57515f80611086565b503d611219565b88513d5f823e3d90fd5b505050906112745f805160206117948339815191529392600596600254600354908a51968796339a429689610dee565b0390a351630e52390960e41b8152fd5b508515611037565b508415611030565b5081871615611029565b505096505f805160206117948339815191526111bd9593945f936112d38a60025493600354895195869533998d429689610dee565b0390a3516337a80a5560e21b81526001600160a01b0394851693810193845293166020830152829160400190565b90508281813d8311611330575b6113188183610db8565b810103126101ea575180151581036101ea575f611017565b503d61130e565b89513d5f823e3d90fd5b61134b9042610e2f565b60045480821061135c575b50610fab565b611367929450610e2f565b915f80611356565b6001600160a01b03165f8181527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020545f80516020611774833981519152919060ff16610e7b57815f525f60205260405f20815f5260205260405f20600160ff1982541617905533917f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d5f80a4600190565b90815f525f60205260405f209060018060a01b031690815f5260205260ff60405f205416155f14610e7b57815f525f60205260405f20815f5260205260405f20600160ff1982541617905533917f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d5f80a4600190565b6001600160a01b03165f8181527f6ac0a3cc639bf037b4b0f42fc91a4de27374e7898883f5a05dc61a01ae17095560205260409020545f80516020611774833981519152919060ff1615610e7b57815f525f60205260405f20815f5260205260405f2060ff19815416905533917ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b5f80a4600190565b90815f525f60205260405f209060018060a01b031690815f5260205260ff60405f2054165f14610e7b57815f525f60205260405f20815f5260205260405f2060ff19815416905533917ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b5f80a4600190565b8051600110156115955760400190565b634e487b7160e01b5f52603260045260245ffd5b9091604091825190606082019467ffffffffffffffff9583811087821117610dda578552600283526020938484019186368437845115611595576001600160a01b03938416835290939190836115fe84611585565b91169052855193849263d06ca61f60e01b845260448401916004850152876024850152518091526064830191905f5b8782821061175a57505050509181805f9403917f0000000000000000000000000000000000000000000000000000000000000000165afa928315611751575f936116c5575b50505061167f9150611585565b519081811015610e7b576116939082610e2f565b61271090818102918183041490151715610e3c5781156116b1570490565b634e487b7160e01b5f52601260045260245ffd5b909192503d805f843e6116d88184610db8565b82019183818403126101ea578051908582116101ea570182601f820112156101ea578051948511610dda578460051b91519461171685840187610db8565b855283808601928201019283116101ea578301905b828210611742575050505061167f905f8080611672565b8151815290830190830161172b565b513d5f823e3d90fd5b835187168552879550938401939092019160010161162d56fefacaf2747a7486cf5730e9265973fb54447d3ace6e7e4711f6360826b073194198617852019876170931154393694db8ba089796a34ceccc19096b707647d745a2646970667358221220c756d21648cda242f3497ac195ce4879d61aa615bd15e8a8ab986f6356be5c3f64736f6c63430008190033",
+    "sourceMap": "633:16752:31:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;2484:4:15;;:::i;:::-;14536:5:31;14518:23;;633:16752;;14601:11;633:16752;;;;;;;;;;;;;;;14710:15;633:16752;;;;14665:61;;-1:-1:-1;633:16752:31;;;;14665:61;;;;633:16752;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;-1:-1:-1;;;16411:28:31;;-1:-1:-1;;;;;633:16752:31;;;16411:28;;;633:16752;;;;;;;;;;16411:8;633:16752;16411:28;;;;;;;633:16752;16411:28;;;633:16752;;16469:29;16502:5;633:16752;16487:11;633:16752;16469:29;;:::i;:::-;633:16752;;;;;;;16411:28;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;16469:29;16411:28;;;;;;;;633:16752;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;927:52;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;-1:-1:-1;;;;;;;;;;;633:16752:31;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;723:21;633:16752;;;;;;;;;;;;;;;;4723:26:15;633:16752:31;;2484:4:15;633:16752:31;;;:::i;:::-;;;;;;;;;;3877:22:15;633:16752:31;2484:4:15;:::i;:::-;4723:26;:::i;:::-;633:16752:31;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;:::i;:::-;;;;:::i;:::-;;;;;;;2484:4:15;;:::i;:::-;2466:103:26;;:::i;:::-;633:16752:31;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;;;;;5958:15;633:16752;;;;;;;;;;;-1:-1:-1;;5887:10:31;;5873:101;;633:16752;;5873:101;6059:12;;;;;;:::i;:::-;6258:8;633:16752;;;;;;;;6258:28;;;;;633:16752;;6258:28;;;633:16752;6258:28;;;;;;;;;;;;;;;;;;;633:16752;6258:28;;;633:16752;;;6088:290;6506:73;633:16752;;6088:290;633:16752;;;;;;;;;;6325:14;633:16752;;;5887:10;;;;5958:15;;6088:290;;;:::i;:::-;;;;5958:15;6416:36;633:16752;;;-1:-1:-1;;;6506:73:31;;-1:-1:-1;;;;;633:16752:31;;;6506:73;;;633:16752;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;6506:73;;;;;;;;;;633:16752;6506:73;;;633:16752;-1:-1:-1;633:16752:31;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;5958:15;633:16752;;;;;;;;5887:10;;6595:99;;633:16752;;;;6595:99;;;;633:16752;;;;;;;;6506:73;;;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;;6506:73;6595:99;6506:73;;;;;;;;633:16752;;;;;;;;;6258:28;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;;;;;;-1:-1:-1;633:16752:31;;;;;;;;;6258:28;;;;;;;;633:16752;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;1134:29;633:16752;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;15886:11;633:16752;;15899:14;633:16752;;;;15933:18;633:16752;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;14249:38;633:16752;;;:::i;:::-;2484:4:15;;;:::i;:::-;14202:32:31;;;:::i;:::-;-1:-1:-1;633:16752:31;14271:15;633:16752;;-1:-1:-1;;;;;633:16752:31;;;;14249:38;633:16752;;;;;;;;-1:-1:-1;;633:16752:31;;;;;836:45;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;15533:71;633:16752;15533:71;633:16752;;2484:4:15;;;:::i;:::-;633:16752:31;;;;;;;;;;;;;;;;;15588:15;633:16752;;;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;:::i;:::-;2484:4:15;;:::i;:::-;-1:-1:-1;;;;;633:16752:31;;;13862:20;;633:16752;;13918:31;13964:41;13918:31;;633:16752;13918:31;;:::i;:::-;;633:16752;13989:15;633:16752;;13964:41;633:16752;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;1026:26;633:16752;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;735:10:25;;-1:-1:-1;;;;;633:16752:31;;5397:34:15;5393:102;;633:16752:31;5505:37:15;633:16752:31;;5505:37:15;:::i;5393:102::-;633:16752:31;-1:-1:-1;;;5454:30:15;;633:16752:31;-1:-1:-1;5454:30:15;633:16752:31;;;;;;;;;;;;;4306:25:15;633:16752:31;;2484:4:15;633:16752:31;;;:::i;2484:4:15:-;4306:25;:::i;633:16752:31:-;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;;:::i;:::-;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;887:34;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;2484:4:15;;:::i;:::-;14988:5:31;14967:26;;633:16752;;15056:14;633:16752;;;;;;;;;;;;;;;15180:15;633:16752;;;;15129:67;;-1:-1:-1;633:16752:31;;;;15129:67;633:16752;;;;-1:-1:-1;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;;;;;;;;;;3877:22:15;633:16752:31;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;1302:33;633:16752;;;;;;;;;;;;;;;-1:-1:-1;;633:16752:31;;;;;;:::i;:::-;;;;;;;2484:4:15;;:::i;:::-;2466:103:26;;:::i;:::-;633:16752:31;;-1:-1:-1;;;7300:20:31;;633:16752;;;;-1:-1:-1;;;;;7300:8:31;633:16752;;;;;7300:20;633:16752;;7300:20;;;;;;;633:16752;7300:20;;;633:16752;-1:-1:-1;633:16752:31;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;;;;7446:15;633:16752;;;;;;;;;;;;7363:10;;7336:135;;633:16752;;7336:135;7556:12;;;;;;:::i;:::-;633:16752;;;;;;7767:28;;;;;633:16752;7767:28;;633:16752;7767:28;;;;;;;;;;;;;;;;;;633:16752;7767:28;;;633:16752;;;7585:302;;633:16752;;;;;;;;;7834:14;633:16752;;;7363:10;;;;7446:15;;7585:302;;;:::i;:::-;;;;7446:15;7925:36;633:16752;;;-1:-1:-1;;;8018:73:31;;-1:-1:-1;;;;;633:16752:31;;8018:73;;;633:16752;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;633:16752:31;;;;;;;;8018:73;;;;;;;;;633:16752;8018:73;;;633:16752;-1:-1:-1;633:16752:31;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;;;;;;;;;;;;;;7446:15;633:16752;;;;;;;;7363:10;;8107:136;;633:16752;;;;8107:136;633:16752;8018:73;;;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;;8018:73;8107:136;8018:73;;;;;;;7767:28;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;;;;-1:-1:-1;633:16752:31;;;;;;;;7585:302;7767:28;;;;;;;7300:20;;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;;;;;;;;7300:20;;;;;;;;;633:16752;;;;;;;-1:-1:-1;;633:16752:31;;;;;;;;;;;;;;;;;;-1:-1:-1;;;2649:47:15;;;:87;;;;633:16752:31;;;;;;;2649:87:15;-1:-1:-1;;;829:40:27;;-1:-1:-1;2649:87:15;;;633:16752:31;;;;-1:-1:-1;;;;;633:16752:31;;;;;;:::o;:::-;;;;-1:-1:-1;;;;;633:16752:31;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;:::o;:::-;;;;;;;;;;;;16656:276;16734:18;633:16752;16734:23;;16730:37;;16795:36;:15;;:36;:::i;:::-;16856:16;633:16752;16845:27;;;;;16841:41;;16899:26;;;:::i;:::-;16656:276;:::o;16841:41::-;16874:8;;-1:-1:-1;16874:8:31;:::o;16730:37::-;16759:8;-1:-1:-1;16759:8:31;:::o;633:16752::-;;;;;;;;;;;;;;;;:::o;3175:103:15:-;735:10:25;2930:6:15;633:16752:31;;;;;;;;;;-1:-1:-1;;;;;;;;;;;788:24:31;633:16752;;3495:23:15;3491:108;;3175:103;:::o;3491:108::-;633:16752:31;;;;3541:47:15;;;;;;735:10:25;3541:47:15;;;633:16752:31;;;;;3541:47:15;3175:103;735:10:25;2930:6:15;633:16752:31;;;;;;;;;;723:21;;633:16752;;3495:23:15;3491:108;;3175:103;:::o;:::-;633:16752:31;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;735:10:25;2930:6:15;633:16752:31;;;;;2930:6:15;633:16752:31;;;3495:23:15;3491:108;;3175:103;:::o;2575:307:26:-;1899:1;2702:7;633:16752:31;2702:18:26;2698:86;;1899:1;2702:7;633:16752:31;2575:307:26:o;2698:86::-;633:16752:31;;-1:-1:-1;;;2743:30:26;;;;;8425:3892:31;;;8570:1;633:16752;8585:18;633:16752;8585:22;8581:231;;8425:3892;-1:-1:-1;633:16752:31;;;-1:-1:-1;;;8865:51:31;;-1:-1:-1;;;;;633:16752:31;;;8865:51;;;;633:16752;;;;;;;;;;;8865:51;633:16752;;;;8865:51;;633:16752;8865:51;633:16752;;;8865:14;633:16752;;8865:51;;;;;;;8570:1;8865:51;;;8425:3892;8864:52;;8860:491;;633:16752;;;9405:21;;:47;;;;8425:3892;9405:64;;;;8425:3892;9405:85;;;;8425:3892;9401:504;;633:16752;;;;;;;;;;;;;;9978:28;;;;633:16752;9978:8;633:16752;9978:28;;;;;;;8570:1;9978:28;;;8425:3892;10020:26;;;;;10016:491;;10630:5;10597:29;10615:11;633:16752;10597:29;;;:::i;:::-;633:16752;10649:27;;;10645:491;;11221:68;;;;;;;:::i;:::-;633:16752;11321:14;633:16752;11303:32;;;;11299:485;;11837:21;;11833:478;;8425:3892;;;;;;;;;:::o;11833:478::-;633:16752;;;11321:14;633:16752;;;;-1:-1:-1;;;;;;;;;;;633:16752:31;;11879:345;633:16752;;;11910:10;;;;12195:15;;11879:345;;;:::i;:::-;;;;633:16752;;;;-1:-1:-1;;;12245:55:31;;;;;633:16752;;;;;12245:55;11299:485;633:16752;;;11356:345;10615:11;633:16752;;;-1:-1:-1;;;;;;;;;;;633:16752:31;;;;;;;;11387:10;;;;11672:15;;11356:345;;;:::i;:::-;;;;633:16752;-1:-1:-1;;;11722:51:31;;;;;633:16752;;;;;11722:51;10645:491;633:16752;10756:38;633:16752;-1:-1:-1;;;;;;;;;;;633:16752:31;;;;10697:347;11065:60;633:16752;;10948:14;633:16752;;;;10728:10;;;;11015:15;;10697:347;;;:::i;:::-;;;;633:16752;-1:-1:-1;;;11065:60:31;;;;;633:16752;;;;;;;;;;;;;;;;;;;;;11065:60;;;;10016:491;633:16752;;;;-1:-1:-1;;;;;;;;;;;633:16752:31;;;10067:354;633:16752;;10296:11;633:16752;;10325:14;633:16752;;;10098:10;;;;;10392:15;;10067:354;;;:::i;:::-;;;;633:16752;-1:-1:-1;;;10442:54:31;;;;;633:16752;;;;;10442:54;9978:28;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;9978:28;;;;;;;;;;633:16752;;;8570:1;633:16752;;;;;9401:504;633:16752;;;;9511:343;-1:-1:-1;;;;;;;;;;;633:16752:31;;8585:18;633:16752;9729:11;633:16752;9758:14;633:16752;;;;9542:10;;;;9825:15;;9511:343;;;:::i;:::-;;;;633:16752;-1:-1:-1;;;9875:19:31;;;9405:85;9473:17;;;9405:85;;:64;9456:13;;;9405:64;;:47;633:16752;;;;9430:22;9405:47;;8860:491;633:16752;;;;-1:-1:-1;;;;;;;;;;;9303:37:31;633:16752;;;8570:1;633:16752;8937:345;633:16752;9157:11;633:16752;;9186:14;633:16752;;;8968:10;;;;9253:15;;;8937:345;;;:::i;:::-;;;;633:16752;-1:-1:-1;;;9303:37:31;;-1:-1:-1;;;;;633:16752:31;;;9303:37;;;633:16752;;;;;;;;;;;;;;;8865:51;;;;;;;;;;;;;;;;:::i;:::-;;;633:16752;;;;;;;;;;;;8865:51;;;;;;;;;633:16752;;;8570:1;633:16752;;;;;8581:231;8641:36;:15;;:36;:::i;:::-;8705:16;633:16752;8695:26;;;8691:111;;8581:231;;;;8691:111;8761:26;;;;;:::i;:::-;8691:111;;;;;6155:316:15;-1:-1:-1;;;;;633:16752:31;2930:6:15;633:16752:31;;;;;;;;;;-1:-1:-1;;;;;;;;;;;788:24:31;633:16752;;;;;;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;2930:6:15;633:16752:31;;;;2930:6:15;633:16752:31;6323:4:15;633:16752:31;;;;;;;;735:10:25;6346:40:15;;2930:6;6346:40;;6323:4;6400:11;:::o;6155:316::-;;633:16752:31;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;;;;;;;;;2930:6:15;633:16752:31;;;;;2930:6:15;633:16752:31;;;6252:23:15;6248:217;633:16752:31;;;;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;2930:6:15;633:16752:31;;;;2930:6:15;633:16752:31;6323:4:15;633:16752:31;;;;;;;;735:10:25;6346:40:15;;2930:6;6346:40;;6323:4;6400:11;:::o;6708:317::-;-1:-1:-1;;;;;633:16752:31;2930:6:15;633:16752:31;;;;;;;;;;-1:-1:-1;;;;;;;;;;;788:24:31;633:16752;;;;;;;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;2930:6:15;633:16752:31;;;;2930:6:15;633:16752:31;;;;;;;;735:10:25;6900:40:15;;2930:6;6900:40;;633:16752:31;6954:11:15;:::o;6708:317::-;;633:16752:31;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;;;;;;;;;2930:6:15;633:16752:31;;;;;2930:6:15;633:16752:31;;;6802:217:15;633:16752:31;;;;2930:6:15;633:16752:31;2930:6:15;633:16752:31;;;2930:6:15;633:16752:31;;2930:6:15;633:16752:31;;;;2930:6:15;633:16752:31;;;;;;;;735:10:25;6900:40:15;;2930:6;6900:40;;633:16752:31;6954:11:15;:::o;633:16752:31:-;;;13070:1;633:16752;;;;;;;:::o;:::-;;;;;;;;;;;;12758:905;;;633:16752;;;;;;;;;;;;;;;;;;;;;;13026:1;633:16752;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;633:16752:31;;;;;;;;;;13065:18;633:16752;13065:18;:::i;:::-;633:16752;;;;;;;;;;;;13184:47;;633:16752;;;13184:47;;;;633:16752;;;;;;;;;;;;;;;-1:-1:-1;633:16752:31;;;;;;;13184:47;;;;;;;-1:-1:-1;13184:47:31;;:17;;633:16752;13184:47;;;;;;;-1:-1:-1;13184:47:31;;;633:16752;13269:10;;;;;;;:::i;:::-;633:16752;13357:33;;;;;13353:72;;13527:32;;;;:::i;:::-;13601:5;633:16752;;;;;;;;;;;;;;;;;;;;12758:905;:::o;633:16752::-;;;;-1:-1:-1;633:16752:31;;13184:47;633:16752;;-1:-1:-1;633:16752:31;13184:47;;;;;;;-1:-1:-1;13184:47:31;;;;;;:::i;:::-;;;633:16752;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;13184:47;;;;13269:10;13184:47;;;;;;633:16752;;;;;;;;;;;;;13184:47;633:16752;;-1:-1:-1;633:16752:31;;;;;;;;;;;;;;-1:-1:-1;633:16752:31;;;;;;;;13070:1;633:16752;;",
+    "linkReferences": {},
+    "immutableReferences": {
+      "37870": [
+        {
+          "start": 1893,
+          "length": 32
+        },
+        {
+          "start": 4070,
+          "length": 32
+        }
+      ],
+      "37873": [
+        {
+          "start": 562,
+          "length": 32
+        },
+        {
+          "start": 1072,
+          "length": 32
+        },
+        {
+          "start": 2397,
+          "length": 32
+        },
+        {
+          "start": 2766,
+          "length": 32
+        },
+        {
+          "start": 4182,
+          "length": 32
+        }
+      ],
+      "37876": [
+        {
+          "start": 712,
+          "length": 32
+        },
+        {
+          "start": 5698,
+          "length": 32
+        }
+      ]
+    }
+  },
+  "methodIdentifiers": {
+    "DAO_ROLE()": "e9c26518",
+    "DEFAULT_ADMIN_ROLE()": "a217fddf",
+    "PAIR_WHITELIST()": "60ffe87e",
+    "SAUCERSWAP_ROUTER()": "fb5a252d",
+    "TRADER_ROLE()": "f0a56fc8",
+    "TREASURY()": "2d2c5565",
+    "authorizeTrader(address)": "57b79a23",
+    "getCooldownRemaining()": "2d89fd5d",
+    "getMaxAllowedTradeAmount(address)": "fc72a61a",
+    "getRiskParameters()": "ba94626c",
+    "getRoleAdmin(bytes32)": "248a9ca3",
+    "grantRole(bytes32,address)": "2f2ff15d",
+    "hasRole(bytes32,address)": "91d14854",
+    "lastTradeTimestamp()": "19f18dee",
+    "maxSlippageBps()": "c4aa7395",
+    "maxTradeBps()": "4656988b",
+    "proposeBuybackAndBurn(address,uint256,uint256,uint256)": "158bf337",
+    "proposeSwap(address,address,uint256,uint256,uint256)": "d1b092a7",
+    "renounceRole(bytes32,address)": "36568abe",
+    "revokeRole(bytes32,address)": "d547741f",
+    "revokeTrader(address)": "6a418fcb",
+    "setMaxSlippageBps(uint256)": "25fc1b3d",
+    "setMaxTradeBps(uint256)": "ff3a24d4",
+    "setTradeCooldownSec(uint256)": "5ce942ee",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "tradeCooldownSec()": "71e63012"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.25+commit.b61c2a91\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_pairWhitelist\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_treasury\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_saucerswapRouter\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_admin\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"_initialTraders\",\"type\":\"address[]\"},{\"internalType\":\"uint256\",\"name\":\"_maxTradeBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_maxSlippageBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_tradeCooldownSec\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"AccessControlBadConfirmation\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"neededRole\",\"type\":\"bytes32\"}],\"name\":\"AccessControlUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"remaining\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"required\",\"type\":\"uint256\"}],\"name\":\"CooldownNotElapsed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"implied\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxAllowed\",\"type\":\"uint256\"}],\"name\":\"ExceedsMaxSlippage\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requested\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxAllowed\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"maxTradeBps\",\"type\":\"uint256\"}],\"name\":\"ExceedsMaxTradeSize\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"available\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"requested\",\"type\":\"uint256\"}],\"name\":\"InsufficientTreasuryBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidParameters\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenOut\",\"type\":\"address\"}],\"name\":\"PairNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuardReentrantCall\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldValue\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newValue\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"MaxSlippageBpsUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldValue\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newValue\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"MaxTradeBpsUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"enum Relay.TradeType\",\"name\":\"tradeType\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenOut\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minAmountOut\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"treasuryBalance\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"maxTradeBps\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"maxSlippageBps\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TradeApproved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldValue\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newValue\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TradeCooldownSecUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"enum Relay.TradeType\",\"name\":\"tradeType\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenOut\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TradeForwarded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"enum Relay.TradeType\",\"name\":\"tradeType\",\"type\":\"uint8\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenOut\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minAmountOut\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TradeProposed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"enum Relay.RejectionReason\",\"name\":\"reason\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"tokenOut\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minAmountOut\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"maxTradeBps\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"maxSlippageBps\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"cooldownRemaining\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TradeRejected\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TraderAuthorized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"}],\"name\":\"TraderRevoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DAO_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"PAIR_WHITELIST\",\"outputs\":[{\"internalType\":\"contract PairWhitelist\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"SAUCERSWAP_ROUTER\",\"outputs\":[{\"internalType\":\"contract ISaucerswapRouter\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TRADER_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TREASURY\",\"outputs\":[{\"internalType\":\"contract Treasury\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"}],\"name\":\"authorizeTrader\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCooldownRemaining\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"}],\"name\":\"getMaxAllowedTradeAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"maxAllowedAmount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getRiskParameters\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"_maxTradeBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_maxSlippageBps\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_tradeCooldownSec\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_lastTradeTimestamp\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lastTradeTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"maxSlippageBps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"maxTradeBps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minAmountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"proposeBuybackAndBurn\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"burnedAmount\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenOut\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minAmountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"proposeSwap\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"callerConfirmation\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"trader\",\"type\":\"address\"}],\"name\":\"revokeTrader\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newMaxSlippageBps\",\"type\":\"uint256\"}],\"name\":\"setMaxSlippageBps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newMaxTradeBps\",\"type\":\"uint256\"}],\"name\":\"setMaxTradeBps\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newTradeCooldownSec\",\"type\":\"uint256\"}],\"name\":\"setTradeCooldownSec\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"tradeCooldownSec\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Enforces whitelisted pairs, position size caps, slippage limits, and cooldown periods\",\"errors\":{\"AccessControlBadConfirmation()\":[{\"details\":\"The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\"}],\"AccessControlUnauthorizedAccount(address,bytes32)\":[{\"details\":\"The `account` is missing a role.\"}],\"ReentrancyGuardReentrantCall()\":[{\"details\":\"Unauthorized reentrant call.\"}]},\"events\":{\"RoleAdminChanged(bytes32,bytes32,bytes32)\":{\"details\":\"Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted to signal this.\"},\"RoleGranted(bytes32,address,address)\":{\"details\":\"Emitted when `account` is granted `role`. `sender` is the account that originated the contract call. This account bears the admin role (for the granted role). Expected in cases where the role was granted using the internal {AccessControl-_grantRole}.\"},\"RoleRevoked(bytes32,address,address)\":{\"details\":\"Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)\"}},\"kind\":\"dev\",\"methods\":{\"authorizeTrader(address)\":{\"params\":{\"trader\":\"Address of trader to authorize\"}},\"constructor\":{\"params\":{\"_admin\":\"Address of admin (DAO multisig)\",\"_initialTraders\":\"Array of initial authorized trader addresses\",\"_maxSlippageBps\":\"Initial max slippage in basis points\",\"_maxTradeBps\":\"Initial max trade size in basis points\",\"_pairWhitelist\":\"Address of PairWhitelist contract\",\"_saucerswapRouter\":\"Address of Saucerswap router\",\"_tradeCooldownSec\":\"Initial cooldown period in seconds\",\"_treasury\":\"Address of Treasury contract\"}},\"getCooldownRemaining()\":{\"returns\":{\"_0\":\"remaining seconds until next trade allowed (0 if ready)\"}},\"getMaxAllowedTradeAmount(address)\":{\"details\":\"Computed as (Treasury balance of tokenIn) * maxTradeBps / 10000\",\"params\":{\"tokenIn\":\"Address of input token\"},\"returns\":{\"maxAllowedAmount\":\"Maximum amount allowed for a single trade\"}},\"getRoleAdmin(bytes32)\":{\"details\":\"Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.\"},\"grantRole(bytes32,address)\":{\"details\":\"Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event.\"},\"hasRole(bytes32,address)\":{\"details\":\"Returns `true` if `account` has been granted `role`.\"},\"proposeBuybackAndBurn(address,uint256,uint256,uint256)\":{\"params\":{\"amountIn\":\"Amount of tokenIn to swap for HTK\",\"deadline\":\"Swap deadline timestamp\",\"minAmountOut\":\"Minimum HTK to receive\",\"tokenIn\":\"Address of input token\"},\"returns\":{\"burnedAmount\":\"Amount of HTK burned\"}},\"proposeSwap(address,address,uint256,uint256,uint256)\":{\"params\":{\"amountIn\":\"Amount of tokenIn to swap\",\"deadline\":\"Swap deadline timestamp\",\"minAmountOut\":\"Minimum amount of tokenOut expected\",\"tokenIn\":\"Address of input token\",\"tokenOut\":\"Address of output token\"},\"returns\":{\"amountOut\":\"Actual amount received\"}},\"renounceRole(bytes32,address)\":{\"details\":\"Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event.\"},\"revokeRole(bytes32,address)\":{\"details\":\"Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event.\"},\"revokeTrader(address)\":{\"params\":{\"trader\":\"Address of trader to revoke\"}},\"setMaxSlippageBps(uint256)\":{\"params\":{\"newMaxSlippageBps\":\"New max slippage in basis points\"}},\"setMaxTradeBps(uint256)\":{\"params\":{\"newMaxTradeBps\":\"New max trade size in basis points\"}},\"setTradeCooldownSec(uint256)\":{\"params\":{\"newTradeCooldownSec\":\"New cooldown period in seconds\"}},\"supportsInterface(bytes4)\":{\"details\":\"Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas.\"}},\"title\":\"Relay\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"authorizeTrader(address)\":{\"notice\":\"Authorize a new trader\"},\"constructor\":{\"notice\":\"Constructor\"},\"getCooldownRemaining()\":{\"notice\":\"Calculate remaining cooldown time\"},\"getMaxAllowedTradeAmount(address)\":{\"notice\":\"Get the maximum allowed trade amount for a given input token under current settings\"},\"getRiskParameters()\":{\"notice\":\"Get current risk parameters snapshot\"},\"proposeBuybackAndBurn(address,uint256,uint256,uint256)\":{\"notice\":\"Submit a buyback-and-burn trade proposal\"},\"proposeSwap(address,address,uint256,uint256,uint256)\":{\"notice\":\"Submit a generic swap trade proposal\"},\"revokeTrader(address)\":{\"notice\":\"Revoke trader authorization\"},\"setMaxSlippageBps(uint256)\":{\"notice\":\"Update maxSlippageBps parameter\"},\"setMaxTradeBps(uint256)\":{\"notice\":\"Update maxTradeBps parameter\"},\"setTradeCooldownSec(uint256)\":{\"notice\":\"Update tradeCooldownSec parameter\"}},\"notice\":\"Validates and relays trade requests to Treasury with comprehensive DAO-controlled rules\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/Relay.sol\":\"Relay\"},\"evmVersion\":\"cancun\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\"],\"viaIR\":true},\"sources\":{\"lib/openzeppelin-contracts/contracts/access/AccessControl.sol\":{\"keccak256\":\"0x1a6b4f6b7798ab80929d491b89d5427a9b3338c0fd1acd0ba325f69c6f1646af\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7bb7f346c12a14dc622bc105ce3c47202fbc89f4b153a28a63bb68193297330c\",\"dweb:/ipfs/QmagwF8P3bUBXwdo159ueEnY9dLSvEWwK24kk2op58egwG\"]},\"lib/openzeppelin-contracts/contracts/access/IAccessControl.sol\":{\"keccak256\":\"0xbff9f59c84e5337689161ce7641c0ef8e872d6a7536fbc1f5133f128887aba3c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b308f882e796f7b79c9502deacb0a62983035c6f6f4e962b319ba6a1f4a77d3d\",\"dweb:/ipfs/QmaWCW7ahEQqFjwhSUhV7Ae7WhfNvzSpE7DQ58hvEooqPL\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol\":{\"keccak256\":\"0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://da5e832b40fc5c3145d3781e2e5fa60ac2052c9d08af7e300dc8ab80c4343100\",\"dweb:/ipfs/QmTzf7N5ZUdh5raqtzbM11yexiUoLC9z3Ws632MCuycq1d\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol\":{\"keccak256\":\"0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1c299900ac4ec268d4570ecef0d697a3013cd11a6eb74e295ee3fbc945056037\",\"dweb:/ipfs/Qmab9owJoxcA7vJT5XNayCMaUR1qxqj1NDzzisduwaJMcZ\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol\":{\"keccak256\":\"0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1bb2332a7ee26dd0b0de9b7fe266749f54820c99ab6a3bcb6f7e6b751d47ee2d\",\"dweb:/ipfs/QmcRWpaBeCYkhy68PR3B4AgD7asuQk7PwkWxrvJbZcikLF\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303\",\"dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol\":{\"keccak256\":\"0x982c5cb790ab941d1e04f807120a71709d4c313ba0bfc16006447ffbd27fbbd5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8150ceb4ac947e8a442b2a9c017e01e880b2be2dd958f1fa9bc405f4c5a86508\",\"dweb:/ipfs/QmbcBmFX66AY6Kbhnd5gx7zpkgqnUafo43XnmayAM7zVdB\"]},\"lib/openzeppelin-contracts/contracts/utils/Context.sol\":{\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12\",\"dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF\"]},\"lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol\":{\"keccak256\":\"0x11a5a79827df29e915a12740caf62fe21ebe27c08c9ae3e09abe9ee3ba3866d3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://3cf0c69ab827e3251db9ee6a50647d62c90ba580a4d7bbff21f2bea39e7b2f4a\",\"dweb:/ipfs/QmZiKwtKU1SBX4RGfQtY7PZfiapbbu6SZ9vizGQD9UHjRA\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol\":{\"keccak256\":\"0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377\",\"dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617\",\"dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u\"]},\"src/PairWhitelist.sol\":{\"keccak256\":\"0xa9ad131448c873d9f85508bff7b2c020b5eaf53e39fadc76576151dd3b4f3871\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://975cd13f5d930a65b0a1f94e1976628dc55024f3b38d503e64634820b647393a\",\"dweb:/ipfs/QmV6W54hSSYKMjFUUHcEZgkiC9xcZXhm196Zt48JTQafN7\"]},\"src/Relay.sol\":{\"keccak256\":\"0x6efccf50c3a819fafc7c53093cd4d62c573ec4c15475c47b8961384d91e50992\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://9f498a257885fea8843f96f87310e3c078a81be9065e7a0340c383a6b74d151a\",\"dweb:/ipfs/QmSvcSvgWv4tqYmdPHEUEvY7fh8DoRR7XnEJ9xtXSMMWd1\"]},\"src/Treasury.sol\":{\"keccak256\":\"0x2c1e4901761944b5f86b8eebb350e88d154044b5d0236769ba834fb5fba21f30\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://98b6d44c8b8b6a68ad4dff399658769d34a8a397d1179df1956be3c8b9ad0c79\",\"dweb:/ipfs/Qmbgp2isutyMv4evEcKetDeATQcu4LvgCXwoD87KNGwS2P\"]},\"src/interfaces/ISaucerswapRouter.sol\":{\"keccak256\":\"0x2acf84b0fd7321b502b51b78802f6baf940f5ad72f838f9a17da3cd5925799d3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://172f77d46343f2b9f5dc2463768e88a14a71ba905f1d5c3c79fe9f8171d4dda5\",\"dweb:/ipfs/QmcxsdDTDZa1wNH9aaf1Pev3veC2rGdup3xFrHT6D8ZX4n\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.25+commit.b61c2a91"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_pairWhitelist",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_treasury",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_saucerswapRouter",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_admin",
+              "type": "address"
+            },
+            {
+              "internalType": "address[]",
+              "name": "_initialTraders",
+              "type": "address[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_maxTradeBps",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_maxSlippageBps",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_tradeCooldownSec",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "AccessControlBadConfirmation"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "neededRole",
+              "type": "bytes32"
+            }
+          ],
+          "type": "error",
+          "name": "AccessControlUnauthorizedAccount"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "remaining",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "required",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "CooldownNotElapsed"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "implied",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxAllowed",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "ExceedsMaxSlippage"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "requested",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxAllowed",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxTradeBps",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "ExceedsMaxTradeSize"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "available",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "requested",
+              "type": "uint256"
+            }
+          ],
+          "type": "error",
+          "name": "InsufficientTreasuryBalance"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "InvalidParameters"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "PairNotWhitelisted"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "ReentrancyGuardReentrantCall"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "oldValue",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "newValue",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "MaxSlippageBpsUpdated",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "oldValue",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "newValue",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "MaxTradeBpsUpdated",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "previousAdminRole",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "newAdminRole",
+              "type": "bytes32",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "RoleAdminChanged",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "RoleGranted",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "RoleRevoked",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "enum Relay.TradeType",
+              "name": "tradeType",
+              "type": "uint8",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "minAmountOut",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "treasuryBalance",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxTradeBps",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxSlippageBps",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TradeApproved",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "oldValue",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "newValue",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TradeCooldownSecUpdated",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "enum Relay.TradeType",
+              "name": "tradeType",
+              "type": "uint8",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TradeForwarded",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "enum Relay.TradeType",
+              "name": "tradeType",
+              "type": "uint8",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "minAmountOut",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TradeProposed",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "enum Relay.RejectionReason",
+              "name": "reason",
+              "type": "uint8",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "minAmountOut",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxTradeBps",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxSlippageBps",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "cooldownRemaining",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TradeRejected",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TraderAuthorized",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "TraderRevoked",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "DAO_ROLE",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "DEFAULT_ADMIN_ROLE",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "PAIR_WHITELIST",
+          "outputs": [
+            {
+              "internalType": "contract PairWhitelist",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "SAUCERSWAP_ROUTER",
+          "outputs": [
+            {
+              "internalType": "contract ISaucerswapRouter",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "TRADER_ROLE",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "TREASURY",
+          "outputs": [
+            {
+              "internalType": "contract Treasury",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "authorizeTrader"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getCooldownRemaining",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getMaxAllowedTradeAmount",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "maxAllowedAmount",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getRiskParameters",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "_maxTradeBps",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_maxSlippageBps",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_tradeCooldownSec",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_lastTradeTimestamp",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getRoleAdmin",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "grantRole"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "hasRole",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "lastTradeTimestamp",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "maxSlippageBps",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "maxTradeBps",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minAmountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "proposeBuybackAndBurn",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "burnedAmount",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenIn",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenOut",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minAmountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "proposeSwap",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "callerConfirmation",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "renounceRole"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "role",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "revokeRole"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "trader",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "revokeTrader"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "newMaxSlippageBps",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setMaxSlippageBps"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "newMaxTradeBps",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setMaxTradeBps"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "newTradeCooldownSec",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setTradeCooldownSec"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tradeCooldownSec",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "authorizeTrader(address)": {
+            "params": {
+              "trader": "Address of trader to authorize"
+            }
+          },
+          "constructor": {
+            "params": {
+              "_admin": "Address of admin (DAO multisig)",
+              "_initialTraders": "Array of initial authorized trader addresses",
+              "_maxSlippageBps": "Initial max slippage in basis points",
+              "_maxTradeBps": "Initial max trade size in basis points",
+              "_pairWhitelist": "Address of PairWhitelist contract",
+              "_saucerswapRouter": "Address of Saucerswap router",
+              "_tradeCooldownSec": "Initial cooldown period in seconds",
+              "_treasury": "Address of Treasury contract"
+            }
+          },
+          "getCooldownRemaining()": {
+            "returns": {
+              "_0": "remaining seconds until next trade allowed (0 if ready)"
+            }
+          },
+          "getMaxAllowedTradeAmount(address)": {
+            "details": "Computed as (Treasury balance of tokenIn) * maxTradeBps / 10000",
+            "params": {
+              "tokenIn": "Address of input token"
+            },
+            "returns": {
+              "maxAllowedAmount": "Maximum amount allowed for a single trade"
+            }
+          },
+          "getRoleAdmin(bytes32)": {
+            "details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
+          },
+          "grantRole(bytes32,address)": {
+            "details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
+          },
+          "hasRole(bytes32,address)": {
+            "details": "Returns `true` if `account` has been granted `role`."
+          },
+          "proposeBuybackAndBurn(address,uint256,uint256,uint256)": {
+            "params": {
+              "amountIn": "Amount of tokenIn to swap for HTK",
+              "deadline": "Swap deadline timestamp",
+              "minAmountOut": "Minimum HTK to receive",
+              "tokenIn": "Address of input token"
+            },
+            "returns": {
+              "burnedAmount": "Amount of HTK burned"
+            }
+          },
+          "proposeSwap(address,address,uint256,uint256,uint256)": {
+            "params": {
+              "amountIn": "Amount of tokenIn to swap",
+              "deadline": "Swap deadline timestamp",
+              "minAmountOut": "Minimum amount of tokenOut expected",
+              "tokenIn": "Address of input token",
+              "tokenOut": "Address of output token"
+            },
+            "returns": {
+              "amountOut": "Actual amount received"
+            }
+          },
+          "renounceRole(bytes32,address)": {
+            "details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event."
+          },
+          "revokeRole(bytes32,address)": {
+            "details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event."
+          },
+          "revokeTrader(address)": {
+            "params": {
+              "trader": "Address of trader to revoke"
+            }
+          },
+          "setMaxSlippageBps(uint256)": {
+            "params": {
+              "newMaxSlippageBps": "New max slippage in basis points"
+            }
+          },
+          "setMaxTradeBps(uint256)": {
+            "params": {
+              "newMaxTradeBps": "New max trade size in basis points"
+            }
+          },
+          "setTradeCooldownSec(uint256)": {
+            "params": {
+              "newTradeCooldownSec": "New cooldown period in seconds"
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "authorizeTrader(address)": {
+            "notice": "Authorize a new trader"
+          },
+          "constructor": {
+            "notice": "Constructor"
+          },
+          "getCooldownRemaining()": {
+            "notice": "Calculate remaining cooldown time"
+          },
+          "getMaxAllowedTradeAmount(address)": {
+            "notice": "Get the maximum allowed trade amount for a given input token under current settings"
+          },
+          "getRiskParameters()": {
+            "notice": "Get current risk parameters snapshot"
+          },
+          "proposeBuybackAndBurn(address,uint256,uint256,uint256)": {
+            "notice": "Submit a buyback-and-burn trade proposal"
+          },
+          "proposeSwap(address,address,uint256,uint256,uint256)": {
+            "notice": "Submit a generic swap trade proposal"
+          },
+          "revokeTrader(address)": {
+            "notice": "Revoke trader authorization"
+          },
+          "setMaxSlippageBps(uint256)": {
+            "notice": "Update maxSlippageBps parameter"
+          },
+          "setMaxTradeBps(uint256)": {
+            "notice": "Update maxTradeBps parameter"
+          },
+          "setTradeCooldownSec(uint256)": {
+            "notice": "Update tradeCooldownSec parameter"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "halmos-cheatcodes/=lib/openzeppelin-contracts/lib/halmos-cheatcodes/src/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/Relay.sol": "Relay"
+      },
+      "evmVersion": "cancun",
+      "libraries": {},
+      "viaIR": true
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/access/AccessControl.sol": {
+        "keccak256": "0x1a6b4f6b7798ab80929d491b89d5427a9b3338c0fd1acd0ba325f69c6f1646af",
+        "urls": [
+          "bzz-raw://7bb7f346c12a14dc622bc105ce3c47202fbc89f4b153a28a63bb68193297330c",
+          "dweb:/ipfs/QmagwF8P3bUBXwdo159ueEnY9dLSvEWwK24kk2op58egwG"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+        "keccak256": "0xbff9f59c84e5337689161ce7641c0ef8e872d6a7536fbc1f5133f128887aba3c",
+        "urls": [
+          "bzz-raw://b308f882e796f7b79c9502deacb0a62983035c6f6f4e962b319ba6a1f4a77d3d",
+          "dweb:/ipfs/QmaWCW7ahEQqFjwhSUhV7Ae7WhfNvzSpE7DQ58hvEooqPL"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC1363.sol": {
+        "keccak256": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+        "urls": [
+          "bzz-raw://da5e832b40fc5c3145d3781e2e5fa60ac2052c9d08af7e300dc8ab80c4343100",
+          "dweb:/ipfs/QmTzf7N5ZUdh5raqtzbM11yexiUoLC9z3Ws632MCuycq1d"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol": {
+        "keccak256": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+        "urls": [
+          "bzz-raw://1c299900ac4ec268d4570ecef0d697a3013cd11a6eb74e295ee3fbc945056037",
+          "dweb:/ipfs/Qmab9owJoxcA7vJT5XNayCMaUR1qxqj1NDzzisduwaJMcZ"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": {
+        "keccak256": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+        "urls": [
+          "bzz-raw://1bb2332a7ee26dd0b0de9b7fe266749f54820c99ab6a3bcb6f7e6b751d47ee2d",
+          "dweb:/ipfs/QmcRWpaBeCYkhy68PR3B4AgD7asuQk7PwkWxrvJbZcikLF"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+        "keccak256": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+        "urls": [
+          "bzz-raw://5282825a626cfe924e504274b864a652b0023591fa66f06a067b25b51ba9b303",
+          "dweb:/ipfs/QmeCfPykghhMc81VJTrHTC7sF6CRvaA1FXVq2pJhwYp1dV"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": {
+        "keccak256": "0x982c5cb790ab941d1e04f807120a71709d4c313ba0bfc16006447ffbd27fbbd5",
+        "urls": [
+          "bzz-raw://8150ceb4ac947e8a442b2a9c017e01e880b2be2dd958f1fa9bc405f4c5a86508",
+          "dweb:/ipfs/QmbcBmFX66AY6Kbhnd5gx7zpkgqnUafo43XnmayAM7zVdB"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+        "keccak256": "0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2",
+        "urls": [
+          "bzz-raw://6a708e8a5bdb1011c2c381c9a5cfd8a9a956d7d0a9dc1bd8bcdaf52f76ef2f12",
+          "dweb:/ipfs/Qmax9WHBnVsZP46ZxEMNRQpLQnrdE4dK8LehML1Py8FowF"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol": {
+        "keccak256": "0x11a5a79827df29e915a12740caf62fe21ebe27c08c9ae3e09abe9ee3ba3866d3",
+        "urls": [
+          "bzz-raw://3cf0c69ab827e3251db9ee6a50647d62c90ba580a4d7bbff21f2bea39e7b2f4a",
+          "dweb:/ipfs/QmZiKwtKU1SBX4RGfQtY7PZfiapbbu6SZ9vizGQD9UHjRA"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {
+        "keccak256": "0x2d9dc2fe26180f74c11c13663647d38e259e45f95eb88f57b61d2160b0109d3e",
+        "urls": [
+          "bzz-raw://81233d1f98060113d9922180bb0f14f8335856fe9f339134b09335e9f678c377",
+          "dweb:/ipfs/QmWh6R35SarhAn4z2wH8SU456jJSYL2FgucfTFgbHJJN4E"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c",
+        "urls": [
+          "bzz-raw://971f954442df5c2ef5b5ebf1eb245d7105d9fbacc7386ee5c796df1d45b21617",
+          "dweb:/ipfs/QmadRjHbkicwqwwh61raUEapaVEtaLMcYbQZWs9gUkgj3u"
+        ],
+        "license": "MIT"
+      },
+      "src/PairWhitelist.sol": {
+        "keccak256": "0xa9ad131448c873d9f85508bff7b2c020b5eaf53e39fadc76576151dd3b4f3871",
+        "urls": [
+          "bzz-raw://975cd13f5d930a65b0a1f94e1976628dc55024f3b38d503e64634820b647393a",
+          "dweb:/ipfs/QmV6W54hSSYKMjFUUHcEZgkiC9xcZXhm196Zt48JTQafN7"
+        ],
+        "license": "MIT"
+      },
+      "src/Relay.sol": {
+        "keccak256": "0x6efccf50c3a819fafc7c53093cd4d62c573ec4c15475c47b8961384d91e50992",
+        "urls": [
+          "bzz-raw://9f498a257885fea8843f96f87310e3c078a81be9065e7a0340c383a6b74d151a",
+          "dweb:/ipfs/QmSvcSvgWv4tqYmdPHEUEvY7fh8DoRR7XnEJ9xtXSMMWd1"
+        ],
+        "license": "MIT"
+      },
+      "src/Treasury.sol": {
+        "keccak256": "0x2c1e4901761944b5f86b8eebb350e88d154044b5d0236769ba834fb5fba21f30",
+        "urls": [
+          "bzz-raw://98b6d44c8b8b6a68ad4dff399658769d34a8a397d1179df1956be3c8b9ad0c79",
+          "dweb:/ipfs/Qmbgp2isutyMv4evEcKetDeATQcu4LvgCXwoD87KNGwS2P"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/ISaucerswapRouter.sol": {
+        "keccak256": "0x2acf84b0fd7321b502b51b78802f6baf940f5ad72f838f9a17da3cd5925799d3",
+        "urls": [
+          "bzz-raw://172f77d46343f2b9f5dc2463768e88a14a71ba905f1d5c3c79fe9f8171d4dda5",
+          "dweb:/ipfs/QmcxsdDTDZa1wNH9aaf1Pev3veC2rGdup3xFrHT6D8ZX4n"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "id": 31
+}
