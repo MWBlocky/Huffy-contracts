@@ -77,9 +77,15 @@ contract RelayTest is Test {
 
     event TraderAuthorized(address indexed trader, uint256 timestamp);
     event TraderRevoked(address indexed trader, uint256 timestamp);
-    event MaxTradeBpsUpdated(uint256 oldValue, uint256 newValue, uint256 timestamp);
-    event MaxSlippageBpsUpdated(uint256 oldValue, uint256 newValue, uint256 timestamp);
-    event TradeCooldownSecUpdated(uint256 oldValue, uint256 newValue, uint256 timestamp);
+    event ParamsUpdated(
+        uint256 oldMaxTradeBps,
+        uint256 newMaxTradeBps,
+        uint256 oldMaxSlippageBps,
+        uint256 newMaxSlippageBps,
+        uint256 oldTradeCooldownSec,
+        uint256 newTradeCooldownSec,
+        uint256 timestamp
+    );
 
     function setUp() public {
         dao = makeAddr("dao");
@@ -184,7 +190,15 @@ contract RelayTest is Test {
         uint256 newValue = 2000;
 
         vm.expectEmit(false, false, false, true);
-        emit MaxTradeBpsUpdated(MAX_TRADE_BPS, newValue, block.timestamp);
+        emit ParamsUpdated(
+            MAX_TRADE_BPS,
+            newValue,
+            MAX_SLIPPAGE_BPS,
+            MAX_SLIPPAGE_BPS,
+            TRADE_COOLDOWN_SEC,
+            TRADE_COOLDOWN_SEC,
+            block.timestamp
+        );
 
         vm.prank(dao);
         parameterStore.setMaxTradeBps(newValue);
@@ -202,7 +216,15 @@ contract RelayTest is Test {
         uint256 newValue = 1000;
 
         vm.expectEmit(false, false, false, true);
-        emit MaxSlippageBpsUpdated(MAX_SLIPPAGE_BPS, newValue, block.timestamp);
+        emit ParamsUpdated(
+            MAX_TRADE_BPS,
+            MAX_TRADE_BPS,
+            MAX_SLIPPAGE_BPS,
+            newValue,
+            TRADE_COOLDOWN_SEC,
+            TRADE_COOLDOWN_SEC,
+            block.timestamp
+        );
 
         vm.prank(dao);
         parameterStore.setMaxSlippageBps(newValue);
@@ -214,7 +236,15 @@ contract RelayTest is Test {
         uint256 newValue = 120;
 
         vm.expectEmit(false, false, false, true);
-        emit TradeCooldownSecUpdated(TRADE_COOLDOWN_SEC, newValue, block.timestamp);
+        emit ParamsUpdated(
+            MAX_TRADE_BPS,
+            MAX_TRADE_BPS,
+            MAX_SLIPPAGE_BPS,
+            MAX_SLIPPAGE_BPS,
+            TRADE_COOLDOWN_SEC,
+            newValue,
+            block.timestamp
+        );
 
         vm.prank(dao);
         parameterStore.setTradeCooldownSec(newValue);
