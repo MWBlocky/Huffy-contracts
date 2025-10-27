@@ -235,7 +235,7 @@ contract RelayTest is Test {
     function test_ProposeSwap_Success() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 amountIn = 1000e6;
         uint256 minAmountOut = 990e6;
@@ -257,7 +257,7 @@ contract RelayTest is Test {
     function test_RevertIf_ExceedsMaxTradeSize() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 treasuryBalance = treasury.getBalance(address(usdcToken));
         uint256 maxAllowed = (treasuryBalance * MAX_TRADE_BPS) / 10000;
@@ -273,7 +273,7 @@ contract RelayTest is Test {
     function test_ProposeSwap_AtMaxTradeSize() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 treasuryBalance = treasury.getBalance(address(usdcToken));
         uint256 maxAllowed = (treasuryBalance * MAX_TRADE_BPS) / 10000;
@@ -289,7 +289,7 @@ contract RelayTest is Test {
     function test_RevertIf_ExceedsMaxSlippage() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 amountIn = 1000e6;
         // Set minAmountOut to 90% of amountIn = 10% slippage (1000 bps) > MAX_SLIPPAGE_BPS (500)
@@ -303,7 +303,7 @@ contract RelayTest is Test {
     function test_ProposeSwap_WithinSlippageTolerance() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 amountIn = 1000e6;
         // Set minAmountOut to 96% of amountIn = 4% slippage (400 bps) < MAX_SLIPPAGE_BPS (500)
@@ -318,7 +318,7 @@ contract RelayTest is Test {
     function test_RevertIf_CooldownNotElapsed() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 amountIn = 1000e6;
         uint256 minAmountOut = 990e6;
@@ -338,7 +338,7 @@ contract RelayTest is Test {
     function test_ProposeSwap_AfterCooldown() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 amountIn = 1000e6;
         uint256 minAmountOut = 990e6;
@@ -358,7 +358,7 @@ contract RelayTest is Test {
     function test_GetCooldownRemaining() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         assertEq(relay.getCooldownRemaining(), 0);
 
@@ -380,7 +380,7 @@ contract RelayTest is Test {
     function test_ProposeBuybackAndBurn_Success() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(htkToken));
+        pairWhitelist.addPair(address(usdcToken), address(htkToken));
 
         uint256 amountIn = 1000e6;
         uint256 minAmountOut = 1900e6; // Expect ~2000 HTK (allowing 5% slippage)
@@ -409,7 +409,7 @@ contract RelayTest is Test {
 
     function test_RevertIf_ZeroAmountIn() public {
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         vm.prank(trader);
         vm.expectRevert(Relay.InvalidParameters.selector);
@@ -418,7 +418,7 @@ contract RelayTest is Test {
 
     function test_RevertIf_ZeroMinAmountOut() public {
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         vm.prank(trader);
         vm.expectRevert(Relay.InvalidParameters.selector);
@@ -429,7 +429,7 @@ contract RelayTest is Test {
 
     function test_RevertIf_InsufficientTreasuryBalance() public {
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 treasuryBalance = treasury.getBalance(address(usdcToken));
         uint256 excessiveAmount = treasuryBalance + 1;
@@ -445,7 +445,7 @@ contract RelayTest is Test {
 
     function test_RevertIf_UnauthorizedTrader() public {
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         vm.prank(unauthorized);
         vm.expectRevert();
@@ -468,7 +468,7 @@ contract RelayTest is Test {
     function test_EventEmission_FullTradeFlow() public {
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 amountIn = 1000e6;
         uint256 minAmountOut = 990e6;
@@ -513,7 +513,7 @@ contract RelayTest is Test {
 
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         // Both traders can trade (respecting cooldown)
         vm.prank(trader);
@@ -534,7 +534,7 @@ contract RelayTest is Test {
 
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         // Execute multiple trades immediately
         vm.startPrank(trader);
@@ -550,7 +550,7 @@ contract RelayTest is Test {
 
         // Whitelist pair
         vm.prank(dao);
-        pairWhitelist.whitelistPair(address(usdcToken), address(usdtToken));
+        pairWhitelist.addPair(address(usdcToken), address(usdtToken));
 
         uint256 treasuryBalance = treasury.getBalance(address(usdcToken));
 

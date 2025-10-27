@@ -61,14 +61,14 @@ forge script script/Relay.s.sol:DeployRelay --rpc-url 127.0.0.1:8545 --private-k
 
 ## 4. Add USDC/HTK
 ```shell
-cast send $PAIR_WHITELIST_ADDRESS "whitelistPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url 127.0.0.1:8545 --private-key $PRIVATE_KEY
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url 127.0.0.1:8545 --private-key $PRIVATE_KEY
 ```
 
 ---
 
 ## 5. Add HTK/USDC
 ```shell
-cast send $PAIR_WHITELIST_ADDRESS "whitelistPair(address,address)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS --rpc-url 127.0.0.1:8545 --private-key $PRIVATE_KEY
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS --rpc-url 127.0.0.1:8545 --private-key $PRIVATE_KEY
 ```
 
 ---
@@ -389,7 +389,7 @@ cast call $RELAY_ADDRESS "tradeCooldownSec()" --rpc-url $RPC_URL
 
 ```shell
 # Blacklist USDC->HTK pair
-cast send $PAIR_WHITELIST_ADDRESS "blacklistPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $PAIR_WHITELIST_ADDRESS "removePair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Check if removed
 cast call $PAIR_WHITELIST_ADDRESS "isPairWhitelisted(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL
@@ -398,17 +398,18 @@ cast call $PAIR_WHITELIST_ADDRESS "isPairWhitelisted(address,address)" $USDC_TOK
 cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 1000000000 1900000000000000000000 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
 # Restore pair to whitelist
-cast send $PAIR_WHITELIST_ADDRESS "whitelistPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ---
 
-## 21. Test PairWhitelist – Batch Whitelisting
+## 21. Test PairWhitelist – Multiple Adds (batch removed)
 
 ```shell
-# Add multiple pairs at once
-# Example: USDC->HTK, HTK->USDC, USDC->USDC (last one will fail)
-cast send $PAIR_WHITELIST_ADDRESS "whitelistPairsBatch(address[],address[])" "[$USDC_TOKEN_ADDRESS,$HTK_TOKEN_ADDRESS]" "[$HTK_TOKEN_ADDRESS,$USDC_TOKEN_ADDRESS]" --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# Add multiple pairs by calling addPair repeatedly
+# Example: USDC->HTK, HTK->USDC
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" $HTK_TOKEN_ADDRESS $USDC_TOKEN_ADDRESS --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ---

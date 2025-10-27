@@ -101,20 +101,26 @@ Whitelist trading pairs that the DAO approves:
 ```bash
 # From DAO admin account
 # Example: Allow USDC -> HTK trades
-cast send $PAIR_WHITELIST_ADDRESS "whitelistPair(address,address)" \
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" \
   $USDC_TOKEN_ADDRESS \
   $HTK_TOKEN_ADDRESS \
   --rpc-url $RPC_URL \
   --private-key $DAO_ADMIN_PRIVATE_KEY
 ```
 
-### B) Batch Whitelist Multiple Pairs
+### B) Whitelist Multiple Pairs (batch removed)
 
 ```bash
-# From DAO admin account
-cast send $PAIR_WHITELIST_ADDRESS "whitelistPairsBatch(address[],address[])" \
-  "[$USDC_TOKEN_ADDRESS,$USDT_TOKEN_ADDRESS]" \
-  "[$HTK_TOKEN_ADDRESS,$HTK_TOKEN_ADDRESS]" \
+# From DAO admin account, call addPair repeatedly
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" \
+  $USDC_TOKEN_ADDRESS \
+  $HTK_TOKEN_ADDRESS \
+  --rpc-url $RPC_URL \
+  --private-key $DAO_ADMIN_PRIVATE_KEY
+
+cast send $PAIR_WHITELIST_ADDRESS "addPair(address,address)" \
+  $USDT_TOKEN_ADDRESS \
+  $HTK_TOKEN_ADDRESS \
   --rpc-url $RPC_URL \
   --private-key $DAO_ADMIN_PRIVATE_KEY
 ```
