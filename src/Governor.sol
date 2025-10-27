@@ -3,86 +3,111 @@ pragma solidity ^0.8.20;
 
 import {HuffyTimelock} from "./Timelock.sol";
 import {Governor} from "../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
+import {GovernorSettings} from "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorSettings.sol";
+import {
+    GovernorCountingSimple
+} from "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorCountingSimple.sol";
+import {GovernorVotes} from "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotes.sol";
+import {
+    GovernorVotesQuorumFraction
+} from "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+import {
+    GovernorTimelockControl
+} from "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorTimelockControl.sol";
+import {IVotes} from "../lib/openzeppelin-contracts/contracts/governance/utils/IVotes.sol";
 import {SafeCast} from "../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
 
-contract HuffyGovernor is Governor {
-    HuffyTimelock public timelock;
-    uint256 public initialProposalId;
+/**
+ * @title Huffy Governor
+ * @notice Governor contract using:
+ * - GovernorSettings: voting delay/period, proposal threshold
+ * - GovernorCountingSimple: support for Against/For/Abstain
+ * - GovernorVotes: ERC20Votes token (HTK)
+ * - GovernorVotesQuorumFraction: quorum as a fraction of total supply
+ * - GovernorTimelockControl: queued execution via timelock
+ */
+contract HuffyGovernor is
+    Governor,
+    GovernorSettings,
+    GovernorCountingSimple,
+    GovernorVotes,
+    GovernorVotesQuorumFraction,
+    GovernorTimelockControl
+{
+    /// @param name_ Governor name (for EIP-712 domain)
+    /// @param token ERC20Votes-compatible token used for voting (HTK)
+    /// @param timelock_ Timelock controller for queued execution
+    /// @param votingDelay_ Delay (in blocks) before voting starts after proposal is created
+    /// @param votingPeriod_ Duration (in blocks) of the voting period
+    /// @param proposalThreshold_ Minimum number of votes required to create a proposal
+    /// @param quorumNumerator_ Quorum numerator for GovernorVotesQuorumFraction (denominator = 100)
+    constructor(
+        string memory name_,
+        IVotes token,
+        HuffyTimelock timelock_,
+        uint256 votingDelay_,
+        uint256 votingPeriod_,
+        uint256 proposalThreshold_,
+        uint256 quorumNumerator_
+    )
+        Governor(name_)
+        GovernorSettings(SafeCast.toUint48(votingDelay_), SafeCast.toUint32(votingPeriod_), proposalThreshold_)
+        GovernorVotes(token)
+        GovernorVotesQuorumFraction(quorumNumerator_)
+        GovernorTimelockControl(timelock_)
+    {}
 
-    constructor(string memory name_, HuffyTimelock timelock_) Governor(name_) {
-        timelock = timelock_;
-
-        address[] memory targets = new address[](1);
-        uint256[] memory values = new uint256[](1);
-        bytes[] memory calldatas = new bytes[](1);
-
-        targets[0] = address(0);
-        values[0] = 0;
-        calldatas[0] = "";
-
-        string memory description = "Initial test proposal";
-
-        initialProposalId = propose(targets, values, calldatas, description);
-    }
-
-    function _executor() internal view override returns (address) {
-        return address(timelock);
+    function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
+        return super.state(proposalId);
     }
 
     function _queueOperations(
-        uint256,
+        uint256 proposalId,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) internal override returns (uint48) {
-        bytes32 salt = descriptionHash;
-        uint256 delay = timelock.getMinDelay();
-        timelock.scheduleBatch(targets, values, calldatas, bytes32(0), salt, delay);
-        return SafeCast.toUint48(block.timestamp + delay);
+    ) internal override(Governor, GovernorTimelockControl) returns (uint48) {
+        return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    function clock() public view override returns (uint48) {
-        return uint48(block.number);
+    function _executeOperations(
+        uint256 proposalId,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) {
+        super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    function CLOCK_MODE() public pure override returns (string memory) {
-        return "mode=blocknumber";
+    function _cancel(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
+        return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function votingDelay() public pure override returns (uint256) {
-        return 1;
+    function proposalNeedsQueuing(uint256 proposalId)
+        public
+        view
+        override(Governor, GovernorTimelockControl)
+        returns (bool)
+    {
+        return super.proposalNeedsQueuing(proposalId);
     }
 
-    function votingPeriod() public pure override returns (uint256) {
-        return 45818;
+    function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
+        return super.proposalThreshold();
     }
 
-    function quorum(uint256) public pure override returns (uint256) {
-        return 0;
+    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
+        return super._executor();
     }
 
-    function _quorumReached(uint256) internal pure override returns (bool) {
-        return true;
-    }
-
-    function _voteSucceeded(uint256) internal pure override returns (bool) {
-        return true;
-    }
-
-    function _getVotes(address, uint256, bytes memory) internal pure override returns (uint256) {
-        return 1;
-    }
-
-    function _countVote(uint256, address, uint8, uint256, bytes memory) internal pure override returns (uint256) {
-        return 1;
-    }
-
-    function COUNTING_MODE() public pure override returns (string memory) {
-        return "support=bravo";
-    }
-
-    function hasVoted(uint256, address) external pure override returns (bool) {
-        return true;
+    function supportsInterface(bytes4 interfaceId) public view override(Governor) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }

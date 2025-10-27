@@ -9,8 +9,8 @@ import {Nonces} from "../lib/openzeppelin-contracts/contracts/utils/Nonces.sol";
 /**
  * @title Huffy Governance Token (HTK)
  * @notice Standard ERC20 compatible on EVM (incl. Hedera EVM)
-* ERC20Permit (EIP-2612)
-* ERC20Votes for on-chain governance (delegation, vote checkpoints, snapshots)
+ * ERC20Permit (EIP-2612)
+ * ERC20Votes for on-chain governance (delegation, vote checkpoints, snapshots)
  */
 contract HTK is ERC20, ERC20Permit, ERC20Votes {
     /// @param initialOwner Address that will receive the initial supply
