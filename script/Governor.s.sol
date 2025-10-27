@@ -3,7 +3,8 @@ pragma solidity ^0.8.20;
 
 import {HuffyGovernor} from "../src/Governor.sol";
 import {HuffyTimelock} from "../src/Timelock.sol";
-import "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
 
 contract DeployGovernor is Script {
     function run() external {

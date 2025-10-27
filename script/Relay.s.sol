@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {Relay} from "../src/Relay.sol";
-import {ParameterStore} from "../src/ParameterStore.sol";
 
 contract DeployRelay is Script {
     function run() external {
@@ -36,7 +35,6 @@ contract DeployRelay is Script {
         for (uint256 i = 0; i < initialTraders.length; i++) {
             console.log("  Trader", i, ":", initialTraders[i]);
         }
-        console.log("ParameterStore Address:", parameterStoreAddr);
 
         require(pairWhitelist != address(0), "PAIR_WHITELIST_ADDRESS not set");
         require(treasury != address(0), "TREASURY_ADDRESS not set");

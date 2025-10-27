@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {HuffyTimelock} from "./Timelock.sol";
 import {Governor} from "../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
+import {SafeCast} from "../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
 
 contract HuffyGovernor is Governor {
     HuffyTimelock public timelock;
@@ -38,7 +39,7 @@ contract HuffyGovernor is Governor {
         bytes32 salt = descriptionHash;
         uint256 delay = timelock.getMinDelay();
         timelock.scheduleBatch(targets, values, calldatas, bytes32(0), salt, delay);
-        return uint48(block.timestamp + delay);
+        return SafeCast.toUint48(block.timestamp + delay);
     }
 
     function clock() public view override returns (uint48) {
