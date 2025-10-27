@@ -7,6 +7,7 @@ import {PairWhitelist} from "../src/PairWhitelist.sol";
 import {Treasury} from "../src/Treasury.sol";
 import {MockERC20} from "../src/mocks/MockERC20.sol";
 import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
+import {ParameterStore} from "../src/ParameterStore.sol";
 
 contract RelayTest is Test {
     Relay public relay;
@@ -16,6 +17,7 @@ contract RelayTest is Test {
     MockERC20 public usdcToken;
     MockERC20 public usdtToken;
     MockSaucerswapRouter public router;
+    ParameterStore public parameterStore;
 
     address public dao;
     address public trader;
@@ -98,18 +100,14 @@ contract RelayTest is Test {
         // Deploy Treasury
         treasury = new Treasury(address(htkToken), address(router), dao, address(this)); // temp relay
 
+        // Deploy ParameterStore
+        parameterStore = new ParameterStore(dao, MAX_TRADE_BPS, MAX_SLIPPAGE_BPS, TRADE_COOLDOWN_SEC);
+
         // Deploy Relay
         address[] memory initialTraders = new address[](1);
         initialTraders[0] = trader;
         relay = new Relay(
-            address(pairWhitelist),
-            address(treasury),
-            address(router),
-            dao,
-            initialTraders,
-            MAX_TRADE_BPS,
-            MAX_SLIPPAGE_BPS,
-            TRADE_COOLDOWN_SEC
+            address(pairWhitelist), address(treasury), address(router), address(parameterStore), dao, initialTraders
         );
 
         // Update Treasury to use Relay
@@ -135,9 +133,9 @@ contract RelayTest is Test {
     function test_Deployment() public view {
         assertEq(address(relay.PAIR_WHITELIST()), address(pairWhitelist));
         assertEq(address(relay.TREASURY()), address(treasury));
-        assertEq(relay.maxTradeBps(), MAX_TRADE_BPS);
-        assertEq(relay.maxSlippageBps(), MAX_SLIPPAGE_BPS);
-        assertEq(relay.tradeCooldownSec(), TRADE_COOLDOWN_SEC);
+        assertEq(parameterStore.maxTradeBps(), MAX_TRADE_BPS);
+        assertEq(parameterStore.maxSlippageBps(), MAX_SLIPPAGE_BPS);
+        assertEq(parameterStore.tradeCooldownSec(), TRADE_COOLDOWN_SEC);
         assertTrue(relay.hasRole(relay.TRADER_ROLE(), trader));
         assertTrue(relay.hasRole(relay.DAO_ROLE(), dao));
     }
@@ -189,15 +187,15 @@ contract RelayTest is Test {
         emit MaxTradeBpsUpdated(MAX_TRADE_BPS, newValue, block.timestamp);
 
         vm.prank(dao);
-        relay.setMaxTradeBps(newValue);
+        parameterStore.setMaxTradeBps(newValue);
 
-        assertEq(relay.maxTradeBps(), newValue);
+        assertEq(parameterStore.maxTradeBps(), newValue);
     }
 
     function test_RevertIf_SetMaxTradeBpsInvalid() public {
         vm.prank(dao);
-        vm.expectRevert("Relay: Invalid maxTradeBps");
-        relay.setMaxTradeBps(10001);
+        vm.expectRevert("ParameterStore: invalid maxTradeBps");
+        parameterStore.setMaxTradeBps(10001);
     }
 
     function test_SetMaxSlippageBps() public {
@@ -207,9 +205,9 @@ contract RelayTest is Test {
         emit MaxSlippageBpsUpdated(MAX_SLIPPAGE_BPS, newValue, block.timestamp);
 
         vm.prank(dao);
-        relay.setMaxSlippageBps(newValue);
+        parameterStore.setMaxSlippageBps(newValue);
 
-        assertEq(relay.maxSlippageBps(), newValue);
+        assertEq(parameterStore.maxSlippageBps(), newValue);
     }
 
     function test_SetTradeCooldownSec() public {
@@ -219,9 +217,9 @@ contract RelayTest is Test {
         emit TradeCooldownSecUpdated(TRADE_COOLDOWN_SEC, newValue, block.timestamp);
 
         vm.prank(dao);
-        relay.setTradeCooldownSec(newValue);
+        parameterStore.setTradeCooldownSec(newValue);
 
-        assertEq(relay.tradeCooldownSec(), newValue);
+        assertEq(parameterStore.tradeCooldownSec(), newValue);
     }
 
     /* ============ Pair Whitelist Enforcement Tests ============ */
@@ -532,7 +530,7 @@ contract RelayTest is Test {
     function test_ProposeSwap_WithZeroCooldown() public {
         // Set cooldown to 0
         vm.prank(dao);
-        relay.setTradeCooldownSec(0);
+        parameterStore.setTradeCooldownSec(0);
 
         // Whitelist pair
         vm.prank(dao);
@@ -548,7 +546,7 @@ contract RelayTest is Test {
     function test_ProposeSwap_With100PercentMaxTrade() public {
         // Set max trade to 100%
         vm.prank(dao);
-        relay.setMaxTradeBps(10000);
+        parameterStore.setMaxTradeBps(10000);
 
         // Whitelist pair
         vm.prank(dao);

@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {Relay} from "../src/Relay.sol";
+import {ParameterStore} from "../src/ParameterStore.sol";
 
 contract DeployRelay is Script {
     function run() external {
@@ -24,34 +25,7 @@ contract DeployRelay is Script {
             initialTraders[0] = msg.sender;
         }
 
-        // If parsing resulted in empty array, use deployer as default
-        if (initialTraders.length == 0) {
-            initialTraders = new address[](1);
-            initialTraders[0] = msg.sender;
-        }
-
-        // Risk parameters (with defaults)
-        uint256 maxTradeBps;
-        uint256 maxSlippageBps;
-        uint256 tradeCooldownSec;
-
-        try vm.envUint("MAX_TRADE_BPS") returns (uint256 value) {
-            maxTradeBps = value;
-        } catch {
-            maxTradeBps = 1000; // Default: 10%
-        }
-
-        try vm.envUint("MAX_SLIPPAGE_BPS") returns (uint256 value) {
-            maxSlippageBps = value;
-        } catch {
-            maxSlippageBps = 500; // Default: 5%
-        }
-
-        try vm.envUint("TRADE_COOLDOWN_SEC") returns (uint256 value) {
-            tradeCooldownSec = value;
-        } catch {
-            tradeCooldownSec = 3600; // Default: 1 hour
-        }
+        address parameterStoreAddr = vm.envAddress("PARAMETER_STORE_ADDRESS");
 
         console.log("Deployer:", msg.sender);
         console.log("PairWhitelist:", pairWhitelist);
@@ -62,25 +36,16 @@ contract DeployRelay is Script {
         for (uint256 i = 0; i < initialTraders.length; i++) {
             console.log("  Trader", i, ":", initialTraders[i]);
         }
-        console.log("Max Trade BPS:", maxTradeBps);
-        console.log("Max Slippage BPS:", maxSlippageBps);
-        console.log("Trade Cooldown (sec):", tradeCooldownSec);
+        console.log("ParameterStore Address:", parameterStoreAddr);
 
         require(pairWhitelist != address(0), "PAIR_WHITELIST_ADDRESS not set");
         require(treasury != address(0), "TREASURY_ADDRESS not set");
+        require(saucerswapRouter != address(0), "SAUCERSWAP_ROUTER not set");
+        require(parameterStoreAddr != address(0), "PARAMETER_STORE_ADDRESS not set");
 
         vm.startBroadcast();
 
-        Relay relay = new Relay(
-            pairWhitelist,
-            treasury,
-            saucerswapRouter,
-            daoAdmin,
-            initialTraders,
-            maxTradeBps,
-            maxSlippageBps,
-            tradeCooldownSec
-        );
+        Relay relay = new Relay(pairWhitelist, treasury, saucerswapRouter, parameterStoreAddr, daoAdmin, initialTraders);
 
         vm.stopBroadcast();
 

@@ -6,11 +6,11 @@ import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/Ree
 import {PairWhitelist} from "./PairWhitelist.sol";
 import {Treasury} from "./Treasury.sol";
 import {ISaucerswapRouter} from "./interfaces/ISaucerswapRouter.sol";
+import {ParameterStore} from "./ParameterStore.sol";
 
 /**
  * @title Relay
  * @notice Validates and relays trade requests to Treasury with comprehensive DAO-controlled rules
- * @dev Enforces whitelisted pairs, position size caps, slippage limits, and cooldown periods
  */
 contract Relay is AccessControl, ReentrancyGuard {
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
@@ -20,11 +20,7 @@ contract Relay is AccessControl, ReentrancyGuard {
     PairWhitelist public immutable PAIR_WHITELIST;
     Treasury public immutable TREASURY;
     ISaucerswapRouter public immutable SAUCERSWAP_ROUTER;
-
-    // Risk parameters (DAO-controlled)
-    uint256 public maxTradeBps; // Max trade size as % of Treasury balance (basis points, e.g., 1000 = 10%)
-    uint256 public maxSlippageBps; // Max allowed slippage (basis points)
-    uint256 public tradeCooldownSec; // Minimum seconds between trades
+    ParameterStore public immutable PARAM_STORE;
 
     // State tracking
     uint256 public lastTradeTimestamp;
@@ -95,46 +91,34 @@ contract Relay is AccessControl, ReentrancyGuard {
     event TraderAuthorized(address indexed trader, uint256 timestamp);
     event TraderRevoked(address indexed trader, uint256 timestamp);
 
-    event MaxTradeBpsUpdated(uint256 oldValue, uint256 newValue, uint256 timestamp);
-    event MaxSlippageBpsUpdated(uint256 oldValue, uint256 newValue, uint256 timestamp);
-    event TradeCooldownSecUpdated(uint256 oldValue, uint256 newValue, uint256 timestamp);
-
     /**
      * @notice Constructor
      * @param _pairWhitelist Address of PairWhitelist contract
      * @param _treasury Address of Treasury contract
      * @param _saucerswapRouter Address of Saucerswap router
+     * @param _parameterStore Address of ParameterStore contract
      * @param _admin Address of admin (DAO multisig)
      * @param _initialTraders Array of initial authorized trader addresses
-     * @param _maxTradeBps Initial max trade size in basis points
-     * @param _maxSlippageBps Initial max slippage in basis points
-     * @param _tradeCooldownSec Initial cooldown period in seconds
      */
     constructor(
         address _pairWhitelist,
         address _treasury,
         address _saucerswapRouter,
+        address _parameterStore,
         address _admin,
-        address[] memory _initialTraders,
-        uint256 _maxTradeBps,
-        uint256 _maxSlippageBps,
-        uint256 _tradeCooldownSec
+        address[] memory _initialTraders
     ) {
         require(_pairWhitelist != address(0), "Relay: Invalid whitelist");
         require(_treasury != address(0), "Relay: Invalid treasury");
         require(_saucerswapRouter != address(0), "Relay: Invalid router");
+        require(_parameterStore != address(0), "Relay: Invalid parameter store");
         require(_admin != address(0), "Relay: Invalid admin");
         require(_initialTraders.length > 0, "Relay: No initial traders");
-        require(_maxTradeBps <= 10000, "Relay: Invalid maxTradeBps");
-        require(_maxSlippageBps <= 10000, "Relay: Invalid maxSlippageBps");
 
         PAIR_WHITELIST = PairWhitelist(_pairWhitelist);
         TREASURY = Treasury(_treasury);
         SAUCERSWAP_ROUTER = ISaucerswapRouter(_saucerswapRouter);
-
-        maxTradeBps = _maxTradeBps;
-        maxSlippageBps = _maxSlippageBps;
-        tradeCooldownSec = _tradeCooldownSec;
+        PARAM_STORE = ParameterStore(_parameterStore);
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(DAO_ROLE, _admin);
@@ -166,6 +150,8 @@ contract Relay is AccessControl, ReentrancyGuard {
         // Validate all rules
         _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
 
+        uint256 _maxTradeBps = PARAM_STORE.maxTradeBps();
+        uint256 _maxSlippageBps = PARAM_STORE.maxSlippageBps();
         emit TradeApproved(
             msg.sender,
             TradeType.SWAP,
@@ -174,8 +160,8 @@ contract Relay is AccessControl, ReentrancyGuard {
             amountIn,
             minAmountOut,
             TREASURY.getBalance(tokenIn),
-            maxTradeBps,
-            maxSlippageBps,
+            _maxTradeBps,
+            _maxSlippageBps,
             block.timestamp
         );
 
@@ -213,6 +199,8 @@ contract Relay is AccessControl, ReentrancyGuard {
         // Validate all rules
         _validateTrade(tokenIn, htkToken, amountIn, minAmountOut);
 
+        uint256 _maxTradeBps = PARAM_STORE.maxTradeBps();
+        uint256 _maxSlippageBps = PARAM_STORE.maxSlippageBps();
         emit TradeApproved(
             msg.sender,
             TradeType.BUYBACK_AND_BURN,
@@ -221,8 +209,8 @@ contract Relay is AccessControl, ReentrancyGuard {
             amountIn,
             minAmountOut,
             TREASURY.getBalance(tokenIn),
-            maxTradeBps,
-            maxSlippageBps,
+            _maxTradeBps,
+            _maxSlippageBps,
             block.timestamp
         );
 
@@ -244,6 +232,10 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @dev Reverts on any rule violation with detailed event emission
      */
     function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut) private {
+        uint256 maxTradeBps = PARAM_STORE.maxTradeBps();
+        uint256 maxSlippageBps = PARAM_STORE.maxSlippageBps();
+        uint256 tradeCooldownSec = PARAM_STORE.tradeCooldownSec();
+
         uint256 cooldownRemaining = 0;
         if (lastTradeTimestamp > 0) {
             uint256 elapsed = block.timestamp - lastTradeTimestamp;
@@ -413,38 +405,6 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Update maxTradeBps parameter
-     * @param newMaxTradeBps New max trade size in basis points
-     */
-    function setMaxTradeBps(uint256 newMaxTradeBps) external onlyRole(DAO_ROLE) {
-        require(newMaxTradeBps <= 10000, "Relay: Invalid maxTradeBps");
-        uint256 oldValue = maxTradeBps;
-        maxTradeBps = newMaxTradeBps;
-        emit MaxTradeBpsUpdated(oldValue, newMaxTradeBps, block.timestamp);
-    }
-
-    /**
-     * @notice Update maxSlippageBps parameter
-     * @param newMaxSlippageBps New max slippage in basis points
-     */
-    function setMaxSlippageBps(uint256 newMaxSlippageBps) external onlyRole(DAO_ROLE) {
-        require(newMaxSlippageBps <= 10000, "Relay: Invalid maxSlippageBps");
-        uint256 oldValue = maxSlippageBps;
-        maxSlippageBps = newMaxSlippageBps;
-        emit MaxSlippageBpsUpdated(oldValue, newMaxSlippageBps, block.timestamp);
-    }
-
-    /**
-     * @notice Update tradeCooldownSec parameter
-     * @param newTradeCooldownSec New cooldown period in seconds
-     */
-    function setTradeCooldownSec(uint256 newTradeCooldownSec) external onlyRole(DAO_ROLE) {
-        uint256 oldValue = tradeCooldownSec;
-        tradeCooldownSec = newTradeCooldownSec;
-        emit TradeCooldownSecUpdated(oldValue, newTradeCooldownSec, block.timestamp);
-    }
-
-    /**
      * @notice Get current risk parameters snapshot
      */
     function getRiskParameters()
@@ -452,7 +412,13 @@ contract Relay is AccessControl, ReentrancyGuard {
         view
         returns (uint256 _maxTradeBps, uint256 _maxSlippageBps, uint256 _tradeCooldownSec, uint256 _lastTradeTimestamp)
     {
-        return (maxTradeBps, maxSlippageBps, tradeCooldownSec, lastTradeTimestamp);
+        return
+            (
+                PARAM_STORE.maxTradeBps(),
+                PARAM_STORE.maxSlippageBps(),
+                PARAM_STORE.tradeCooldownSec(),
+                lastTradeTimestamp
+            );
     }
 
     /**
@@ -463,7 +429,8 @@ contract Relay is AccessControl, ReentrancyGuard {
      */
     function getMaxAllowedTradeAmount(address tokenIn) external view returns (uint256 maxAllowedAmount) {
         uint256 treasuryBalance = TREASURY.getBalance(tokenIn);
-        maxAllowedAmount = (treasuryBalance * maxTradeBps) / 10000;
+        uint256 _maxTradeBps = PARAM_STORE.maxTradeBps();
+        maxAllowedAmount = (treasuryBalance * _maxTradeBps) / 10000;
     }
 
     /**
@@ -472,6 +439,7 @@ contract Relay is AccessControl, ReentrancyGuard {
      */
     function getCooldownRemaining() external view returns (uint256) {
         if (lastTradeTimestamp == 0) return 0;
+        uint256 tradeCooldownSec = PARAM_STORE.tradeCooldownSec();
         uint256 elapsed = block.timestamp - lastTradeTimestamp;
         if (elapsed >= tradeCooldownSec) return 0;
         return tradeCooldownSec - elapsed;

@@ -1,14 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { Governor } from "../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
-import { TimelockController } from  "../lib/openzeppelin-contracts/contracts/governance/TimelockController.sol";
+import {HuffyTimelock} from "./Timelock.sol";
+import {Governor} from "../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
 
 contract HuffyGovernor is Governor {
-    TimelockController public timelock;
+    HuffyTimelock public timelock;
+    uint256 public initialProposalId;
 
-    constructor(string memory name_, TimelockController timelock_) Governor(name_) {
+    constructor(string memory name_, HuffyTimelock timelock_) Governor(name_) {
         timelock = timelock_;
+
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+
+        targets[0] = address(0);
+        values[0] = 0;
+        calldatas[0] = "";
+
+        string memory description = "Initial test proposal";
+
+        initialProposalId = propose(targets, values, calldatas, description);
     }
 
     function _executor() internal view override returns (address) {
@@ -22,8 +35,10 @@ contract HuffyGovernor is Governor {
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) internal override returns (uint48) {
-        timelock.scheduleBatch(targets, values, calldatas, bytes32(0), descriptionHash, timelock.getMinDelay());
-        return uint48(block.timestamp + timelock.getMinDelay());
+        bytes32 salt = descriptionHash;
+        uint256 delay = timelock.getMinDelay();
+        timelock.scheduleBatch(targets, values, calldatas, bytes32(0), salt, delay);
+        return uint48(block.timestamp + delay);
     }
 
     function clock() public view override returns (uint48) {
@@ -58,13 +73,7 @@ contract HuffyGovernor is Governor {
         return 1;
     }
 
-    function _countVote(
-        uint256,
-        address,
-        uint8,
-        uint256,
-        bytes memory
-    ) internal pure override returns (uint256) {
+    function _countVote(uint256, address, uint8, uint256, bytes memory) internal pure override returns (uint256) {
         return 1;
     }
 
@@ -73,6 +82,6 @@ contract HuffyGovernor is Governor {
     }
 
     function hasVoted(uint256, address) external pure override returns (bool) {
-        return false;
+        return true;
     }
 }
