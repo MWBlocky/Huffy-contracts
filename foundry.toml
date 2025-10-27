@@ -6,3 +6,5 @@ chain_id = 296  # Hedera testnet chainId
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+[lint]
+exclude_lints = ["mixed-case-variable"]
