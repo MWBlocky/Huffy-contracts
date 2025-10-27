@@ -33,11 +33,18 @@ contract DeployGovernor is Script {
         address htk = vm.envAddress("HTK_TOKEN_ADDRESS");
         IVotes votesToken = IVotes(htk);
 
-        // Governor parameters (example values)
-        uint256 votingDelay = 1; // blocks
-        uint256 votingPeriod = 45818; // ~1 week @13s blocks
-        uint256 proposalThreshold = 0; // no threshold
-        uint256 quorumNumerator = 4; // 4%
+        // Governor parameters
+        uint256 votingDelay;
+        try vm.envUint("VOTING_DELAY") returns (uint256 v) { votingDelay = v; } catch { votingDelay = 1; }
+
+        uint256 votingPeriod;
+        try vm.envUint("VOTING_PERIOD") returns (uint256 v) { votingPeriod = v; } catch { votingPeriod = 120; }
+
+        uint256 proposalThreshold;
+        try vm.envUint("PROPOSAL_THRESHOLD") returns (uint256 v) { proposalThreshold = v; } catch { proposalThreshold = 0; }
+
+        uint256 quorumNumerator;
+        try vm.envUint("QUORUM_NUMERATOR") returns (uint256 v) { quorumNumerator = v; } catch { quorumNumerator = 4; }
 
         HuffyGovernor governor = new HuffyGovernor(
             "HuffyGovernor", votesToken, timelock, votingDelay, votingPeriod, proposalThreshold, quorumNumerator
@@ -52,15 +59,15 @@ contract DeployGovernor is Script {
         // Governor proposes and cancels; anyone can execute via address(0)
         timelock.grantRole(PROPOSER_ROLE, address(governor));
         timelock.grantRole(CANCELLER_ROLE, address(governor));
-        // address(0) executor already set by constructor, but grant explicitly for clarity
         timelock.grantRole(EXECUTOR_ROLE, address(0));
 
-        // Make timelock self-admin and remove deployer control
-        timelock.grantRole(DEFAULT_ADMIN_ROLE, address(timelock));
-        timelock.revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        // Ensure deployer has no special proposer/executor privileges
+        // Revoke deployer privileges
         timelock.revokeRole(PROPOSER_ROLE, msg.sender);
         timelock.revokeRole(EXECUTOR_ROLE, msg.sender);
+
+        // Remove deployer's admin control
+        timelock.grantRole(DEFAULT_ADMIN_ROLE, address(timelock));
+        timelock.revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         // Deploy DAO-controlled modules owned by Timelock
         PairWhitelist pairWhitelist = new PairWhitelist(address(timelock));
@@ -68,7 +75,7 @@ contract DeployGovernor is Script {
         ParameterStore parameterStore = new ParameterStore(address(timelock), 1_000, 300, 3600);
 
         console.log("HuffyTimelock deployed at:", address(timelock));
-        console.log("HTK deployed at:", address(htk));
+        console.log("HTK token address:", htk);
         console.log("HuffyGovernor deployed at:", address(governor));
         console.log("PairWhitelist deployed at:", address(pairWhitelist));
         console.log("ParameterStore deployed at:", address(parameterStore));
