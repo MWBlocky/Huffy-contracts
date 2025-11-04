@@ -7,6 +7,7 @@ import {PairWhitelist} from "./PairWhitelist.sol";
 import {Treasury} from "./Treasury.sol";
 import {ISaucerswapRouter} from "./interfaces/ISaucerswapRouter.sol";
 import {ParameterStore} from "./ParameterStore.sol";
+import {ITradeValidator} from "./interfaces/ITradeValidator.sol";
 
 /**
  * @title Relay
@@ -24,6 +25,7 @@ contract Relay is AccessControl, ReentrancyGuard {
 
     // State tracking
     uint256 public lastTradeTimestamp;
+    ITradeValidator[] public VALIDATORS;
 
     // Trade types
     enum TradeType {
@@ -39,6 +41,18 @@ contract Relay is AccessControl, ReentrancyGuard {
         COOLDOWN_NOT_ELAPSED,
         INSUFFICIENT_TREASURY_BALANCE,
         INVALID_PARAMETERS
+    }
+
+    struct ValidationResult {
+        bool isValid;
+        uint256 maxTradeBps;
+        uint256 maxSlippageBps;
+        uint256 tradeCooldownSec;
+        uint256 cooldownRemaining;
+        uint256 treasuryBalance;
+        uint256 impliedSlippage;
+        uint256 maxAllowedAmount;
+        RejectionReason[] reasons;
     }
 
     // Events
@@ -90,6 +104,30 @@ contract Relay is AccessControl, ReentrancyGuard {
 
     event TraderAuthorized(address indexed trader, uint256 timestamp);
     event TraderRevoked(address indexed trader, uint256 timestamp);
+
+    event TradeValidationFailed(
+        address indexed trader,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        uint256 maxTradeBps,
+        uint256 maxSlippageBps,
+        uint256 cooldownRemaining,
+        RejectionReason[] reasons,
+        uint256 timestamp
+    );
+
+    function addValidator(address validator) external onlyRole(DAO_ROLE) {
+        require(validator != address(0), "Relay: invalid validator");
+        VALIDATORS.push(ITradeValidator(validator));
+    }
+
+    function removeValidator(uint256 index) external onlyRole(DAO_ROLE) {
+        require(index < VALIDATORS.length, "Relay: index OOB");
+        VALIDATORS[index] = VALIDATORS[VALIDATORS.length - 1];
+        VALIDATORS.pop();
+    }
 
     /**
      * @notice Constructor
@@ -143,15 +181,30 @@ contract Relay is AccessControl, ReentrancyGuard {
         external
         onlyRole(TRADER_ROLE)
         nonReentrant
-        returns (uint256 amountOut)
+        returns (uint256 amountOut, RejectionReason[] reasons)
     {
         emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, minAmountOut, block.timestamp);
 
-        // Validate all rules
-        _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
+        // Validate all rules (non-reverting)
+        ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
+        if (!vr.isValid) {
+            emit TradeValidationFailed(
+                msg.sender,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                minAmountOut,
+                vr.maxTradeBps,
+                vr.maxSlippageBps,
+                vr.cooldownRemaining,
+                vr.reasons,
+                block.timestamp
+            );
+            return (0, vr.reasons);
+        }
 
-        uint256 _maxTradeBps = PARAM_STORE.maxTradeBps();
-        uint256 _maxSlippageBps = PARAM_STORE.maxSlippageBps();
+        uint256 _maxTradeBps = vr.maxTradeBps;
+        uint256 _maxSlippageBps = vr.maxSlippageBps;
         emit TradeApproved(
             msg.sender,
             TradeType.SWAP,
@@ -173,7 +226,7 @@ contract Relay is AccessControl, ReentrancyGuard {
 
         emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
 
-        return amountOut;
+        return (amountOut, []);
     }
 
     /**
@@ -188,7 +241,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         external
         onlyRole(TRADER_ROLE)
         nonReentrant
-        returns (uint256 burnedAmount)
+        returns (uint256 burnedAmount, RejectionReason[] reasons)
     {
         address htkToken = TREASURY.HTK_TOKEN();
 
@@ -196,11 +249,26 @@ contract Relay is AccessControl, ReentrancyGuard {
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
         );
 
-        // Validate all rules
-        _validateTrade(tokenIn, htkToken, amountIn, minAmountOut);
+        // Validate all rules (non-reverting)
+        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut);
+        if (!vr.isValid) {
+            emit TradeValidationFailed(
+                msg.sender,
+                tokenIn,
+                htkToken,
+                amountIn,
+                minAmountOut,
+                vr.maxTradeBps,
+                vr.maxSlippageBps,
+                vr.cooldownRemaining,
+                vr.reasons,
+                block.timestamp
+            );
+            return (0, vr.reasons);
+        }
 
-        uint256 _maxTradeBps = PARAM_STORE.maxTradeBps();
-        uint256 _maxSlippageBps = PARAM_STORE.maxSlippageBps();
+        uint256 _maxTradeBps = vr.maxTradeBps;
+        uint256 _maxSlippageBps = vr.maxSlippageBps;
         emit TradeApproved(
             msg.sender,
             TradeType.BUYBACK_AND_BURN,
@@ -224,130 +292,68 @@ contract Relay is AccessControl, ReentrancyGuard {
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, burnedAmount, block.timestamp
         );
 
-        return burnedAmount;
+        return (burnedAmount, vr.reasons);
     }
 
     /**
      * @notice Validate trade against all DAO rules
-     * @dev Reverts on any rule violation with detailed event emission
+     * @dev Non-reverting: aggregates all violations and returns details
      */
-    function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut) private {
-        uint256 maxTradeBps = PARAM_STORE.maxTradeBps();
-        uint256 maxSlippageBps = PARAM_STORE.maxSlippageBps();
-        uint256 tradeCooldownSec = PARAM_STORE.tradeCooldownSec();
+    function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
+        private
+        view
+        returns (ValidationResult memory vr)
+    {
+        vr.maxTradeBps = PARAM_STORE.maxTradeBps();
+        vr.maxSlippageBps = PARAM_STORE.maxSlippageBps();
+        vr.tradeCooldownSec = PARAM_STORE.tradeCooldownSec();
 
-        uint256 cooldownRemaining = 0;
+        // cooldown calc
         if (lastTradeTimestamp > 0) {
             uint256 elapsed = block.timestamp - lastTradeTimestamp;
-            if (elapsed < tradeCooldownSec) {
-                cooldownRemaining = tradeCooldownSec - elapsed;
+            if (elapsed < vr.tradeCooldownSec) {
+                vr.cooldownRemaining = vr.tradeCooldownSec - elapsed;
             }
         }
 
-        // 1. Validate pair whitelist
-        if (!PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut)) {
-            emit TradeRejected(
-                msg.sender,
-                RejectionReason.PAIR_NOT_WHITELISTED,
-                tokenIn,
-                tokenOut,
-                amountIn,
-                minAmountOut,
-                maxTradeBps,
-                maxSlippageBps,
-                cooldownRemaining,
-                block.timestamp
+        // snapshot external state for validators
+        bool pairWhitelisted = PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut);
+        vr.treasuryBalance = TREASURY.getBalance(tokenIn);
+        vr.maxAllowedAmount = (vr.treasuryBalance * vr.maxTradeBps) / 10000;
+        vr.impliedSlippage = _calculateImpliedSlippage(tokenIn, tokenOut, amountIn, minAmountOut);
+
+        ITradeValidator.TradeContext memory ctx = ITradeValidator.TradeContext({
+            maxTradeBps: vr.maxTradeBps,
+            maxSlippageBps: vr.maxSlippageBps,
+            tradeCooldownSec: vr.tradeCooldownSec,
+            lastTradeTimestamp: lastTradeTimestamp,
+            cooldownRemaining: vr.cooldownRemaining,
+            treasuryBalance: vr.treasuryBalance,
+            maxAllowedAmount: vr.maxAllowedAmount,
+            impliedSlippage: vr.impliedSlippage,
+            pairWhitelisted: pairWhitelisted
+        });
+
+        uint256 validatorsLen = VALIDATORS.length;
+        RejectionReason[] memory tmp = new RejectionReason[](validatorsLen);
+        uint256 reasonCount = 0;
+        for (uint256 i = 0; i < validatorsLen; i++) {
+            (bool ok, uint8 reasonCode) = VALIDATORS[i].validate(
+                msg.sender, tokenIn, tokenOut, amountIn, minAmountOut, ctx
             );
-            revert PairNotWhitelisted(tokenIn, tokenOut);
+            if (!ok) {
+                if (reasonCode <= uint8(type(RejectionReason).max)) {
+                    tmp[reasonCount++] = RejectionReason(reasonCode);
+                }
+            }
         }
 
-        // 2. Validate basic parameters
-        if (tokenIn == address(0) || tokenOut == address(0) || amountIn == 0 || minAmountOut == 0) {
-            emit TradeRejected(
-                msg.sender,
-                RejectionReason.INVALID_PARAMETERS,
-                tokenIn,
-                tokenOut,
-                amountIn,
-                minAmountOut,
-                maxTradeBps,
-                maxSlippageBps,
-                cooldownRemaining,
-                block.timestamp
-            );
-            revert InvalidParameters();
+        vr.reasons = new RejectionReason[](reasonCount);
+        for (uint256 i = 0; i < reasonCount; i++) {
+            vr.reasons[i] = tmp[i];
         }
-
-        // 3. Check Treasury balance
-        uint256 treasuryBalance = TREASURY.getBalance(tokenIn);
-        if (treasuryBalance < amountIn) {
-            emit TradeRejected(
-                msg.sender,
-                RejectionReason.INSUFFICIENT_TREASURY_BALANCE,
-                tokenIn,
-                tokenOut,
-                amountIn,
-                minAmountOut,
-                maxTradeBps,
-                maxSlippageBps,
-                cooldownRemaining,
-                block.timestamp
-            );
-            revert InsufficientTreasuryBalance(treasuryBalance, amountIn);
-        }
-
-        // 4. Validate max trade size (maxTradeBps)
-        uint256 maxAllowedAmount = (treasuryBalance * maxTradeBps) / 10000;
-        if (amountIn > maxAllowedAmount) {
-            emit TradeRejected(
-                msg.sender,
-                RejectionReason.EXCEEDS_MAX_TRADE_SIZE,
-                tokenIn,
-                tokenOut,
-                amountIn,
-                minAmountOut,
-                maxTradeBps,
-                maxSlippageBps,
-                cooldownRemaining,
-                block.timestamp
-            );
-            revert ExceedsMaxTradeSize(amountIn, maxAllowedAmount, maxTradeBps);
-        }
-
-        // 5. Validate slippage (maxSlippageBps)
-        uint256 impliedSlippage = _calculateImpliedSlippage(tokenIn, tokenOut, amountIn, minAmountOut);
-        if (impliedSlippage > maxSlippageBps) {
-            emit TradeRejected(
-                msg.sender,
-                RejectionReason.EXCEEDS_MAX_SLIPPAGE,
-                tokenIn,
-                tokenOut,
-                amountIn,
-                minAmountOut,
-                maxTradeBps,
-                maxSlippageBps,
-                cooldownRemaining,
-                block.timestamp
-            );
-            revert ExceedsMaxSlippage(impliedSlippage, maxSlippageBps);
-        }
-
-        // 6. Validate cooldown period
-        if (cooldownRemaining > 0) {
-            emit TradeRejected(
-                msg.sender,
-                RejectionReason.COOLDOWN_NOT_ELAPSED,
-                tokenIn,
-                tokenOut,
-                amountIn,
-                minAmountOut,
-                maxTradeBps,
-                maxSlippageBps,
-                cooldownRemaining,
-                block.timestamp
-            );
-            revert CooldownNotElapsed(cooldownRemaining, tradeCooldownSec);
-        }
+        vr.isValid = (reasonCount == 0);
+        return vr;
     }
 
     /**
