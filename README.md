@@ -67,6 +67,7 @@ cd huffy-contracts
 
 # Install dependencies
 forge install
+forge install OpenZeppelin/openzeppelin-contracts
 
 # Build contracts
 forge build
