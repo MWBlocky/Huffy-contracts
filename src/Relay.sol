@@ -135,10 +135,10 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @return amountOut Actual amount received
      */
     function proposeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, uint256 deadline)
-    external
-    onlyRole(TRADER_ROLE)
-    nonReentrant
-    returns (uint256 amountOut, bytes32[] memory reasonCodes)
+        external
+        onlyRole(TRADER_ROLE)
+        nonReentrant
+        returns (uint256 amountOut, bytes32[] memory reasonCodes)
     {
         emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, minAmountOut, block.timestamp);
         ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
@@ -184,10 +184,10 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @return burnedAmount Amount of HTK burned
      */
     function proposeBuybackAndBurn(address tokenIn, uint256 amountIn, uint256 minAmountOut, uint256 deadline)
-    external
-    onlyRole(TRADER_ROLE)
-    nonReentrant
-    returns (uint256 burnedAmount, bytes32[] memory reasonCodes)
+        external
+        onlyRole(TRADER_ROLE)
+        nonReentrant
+        returns (uint256 burnedAmount, bytes32[] memory reasonCodes)
     {
         address htkToken = TREASURY.HTK_TOKEN();
         emit TradeProposed(
@@ -230,9 +230,9 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
-    internal
-    view
-    returns (ValidationResult memory vr)
+        internal
+        view
+        returns (ValidationResult memory vr)
     {
         vr.maxTradeBps = PARAM_STORE.maxTradeBps();
         vr.maxSlippageBps = PARAM_STORE.maxSlippageBps();
@@ -262,8 +262,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         bytes32[] memory tmp = new bytes32[](validatorsLen * 4);
         uint256 reasonCount = 0;
         for (uint256 i = 0; i < validatorsLen; i++) {
-            (bool ok, bytes32 code) =
-                VALIDATORS[i].validate(msg.sender, tokenIn, tokenOut, amountIn, minAmountOut, ctx);
+            (bool ok, bytes32 code) = VALIDATORS[i].validate(msg.sender, tokenIn, tokenOut, amountIn, minAmountOut, ctx);
             if (!ok) {
                 tmp[reasonCount++] = code;
             }
@@ -287,9 +286,9 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @return slippageBps Slippage in basis points
      */
     function _calculateImpliedSlippage(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
-    private
-    view
-    returns (uint256 slippageBps)
+        private
+        view
+        returns (uint256 slippageBps)
     {
         address[] memory path = new address[](2);
         path[0] = tokenIn;
@@ -327,16 +326,17 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @notice Get current risk parameters snapshot
      */
     function getRiskParameters()
-    external
-    view
-    returns (uint256 _maxTradeBps, uint256 _maxSlippageBps, uint256 _tradeCooldownSec, uint256 _lastTradeTimestamp)
+        external
+        view
+        returns (uint256 _maxTradeBps, uint256 _maxSlippageBps, uint256 _tradeCooldownSec, uint256 _lastTradeTimestamp)
     {
-        return (
-            PARAM_STORE.maxTradeBps(),
-            PARAM_STORE.maxSlippageBps(),
-            PARAM_STORE.tradeCooldownSec(),
-            lastTradeTimestamp
-        );
+        return
+            (
+                PARAM_STORE.maxTradeBps(),
+                PARAM_STORE.maxSlippageBps(),
+                PARAM_STORE.tradeCooldownSec(),
+                lastTradeTimestamp
+            );
     }
 
     /**

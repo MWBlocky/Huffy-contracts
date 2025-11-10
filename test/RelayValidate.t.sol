@@ -23,7 +23,14 @@ contract MockRouter {
         rate = r;
     }
 
-    function getAmountsOut(uint256 amountIn, address[] calldata /*path*/ ) external view returns (uint256[] memory) {
+    function getAmountsOut(
+        uint256 amountIn,
+        address[] calldata /*path*/
+    )
+        external
+        view
+        returns (uint256[] memory)
+    {
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = amountIn;
         amounts[1] = amountIn * rate;
@@ -47,24 +54,47 @@ contract MockRouter {
 
 contract MockPairWhitelist {
     mapping(address => mapping(address => bool)) public pair;
-    function setPair(address a, address b, bool v) external { pair[a][b] = v; }
-    function isPairWhitelisted(address a, address b) external view returns (bool) { return pair[a][b]; }
+
+    function setPair(address a, address b, bool v) external {
+        pair[a][b] = v;
+    }
+
+    function isPairWhitelisted(address a, address b) external view returns (bool) {
+        return pair[a][b];
+    }
 }
 
 contract MockParameterStore {
     uint256 public maxTradeBps = 1000; // 10%
     uint256 public maxSlippageBps = 100; // 1%
     uint256 public tradeCooldownSec = 0;
-    function set(uint256 a, uint256 b, uint256 c) external { maxTradeBps=a; maxSlippageBps=b; tradeCooldownSec=c; }
+
+    function set(uint256 a, uint256 b, uint256 c) external {
+        maxTradeBps = a;
+        maxSlippageBps = b;
+        tradeCooldownSec = c;
+    }
 }
 
 contract MockTreasury {
     address public immutable HTK_TOKEN = address(0x1234);
     mapping(address => uint256) public bal;
-    function setBalance(address token, uint256 v) external { bal[token] = v; }
-    function getBalance(address token) external view returns (uint256) { return bal[token]; }
-    function executeSwap(address, address, uint256, uint256, uint256) external pure returns (uint256) { return 0; }
-    function executeBuybackAndBurn(address, uint256, uint256, uint256) external pure returns (uint256) { return 0; }
+
+    function setBalance(address token, uint256 v) external {
+        bal[token] = v;
+    }
+
+    function getBalance(address token) external view returns (uint256) {
+        return bal[token];
+    }
+
+    function executeSwap(address, address, uint256, uint256, uint256) external pure returns (uint256) {
+        return 0;
+    }
+
+    function executeBuybackAndBurn(address, uint256, uint256, uint256) external pure returns (uint256) {
+        return 0;
+    }
 }
 
 contract TestRelay is Relay {
@@ -85,7 +115,9 @@ contract TestRelay is Relay {
         return _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
     }
 
-    function validatorsLength() external view returns (uint256) { return VALIDATORS.length; }
+    function validatorsLength() external view returns (uint256) {
+        return VALIDATORS.length;
+    }
 }
 
 contract RelayValidateTest is Test {
@@ -107,7 +139,8 @@ contract RelayValidateTest is Test {
         router = new MockRouter();
         params = new MockParameterStore();
 
-        address[] memory traders = new address[](1); traders[0] = trader;
+        address[] memory traders = new address[](1);
+        traders[0] = trader;
         relay = new TestRelay(address(pw), address(treasury), address(router), address(params), admin, traders);
 
         // Add validators
@@ -196,14 +229,11 @@ contract RelayValidateTest is Test {
 }
 
 contract DummyValidator is ITradeValidator {
-    function validate(
-        address,
-        address,
-        address,
-        uint256,
-        uint256,
-        TradeContext calldata
-    ) external pure returns (bool, bytes32) {
+    function validate(address, address, address, uint256, uint256, TradeContext calldata)
+        external
+        pure
+        returns (bool, bytes32)
+    {
         return (false, keccak256("UNKNOWN_REASON"));
     }
 }

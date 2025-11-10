@@ -47,9 +47,7 @@ contract PairWhitelist {
         require(tokenIn != address(0) && tokenOut != address(0), "PairWhitelist: invalid token");
         require(tokenIn != tokenOut, "PairWhitelist: same token");
 
-        (address token0, address token1) = tokenIn < tokenOut
-            ? (tokenIn, tokenOut)
-            : (tokenOut, tokenIn);
+        (address token0, address token1) = tokenIn < tokenOut ? (tokenIn, tokenOut) : (tokenOut, tokenIn);
 
         require(!_whitelist[token0][token1], "PairWhitelist: already added");
 
@@ -67,9 +65,7 @@ contract PairWhitelist {
      * @param tokenOut Address of the output token
      */
     function removePair(address tokenIn, address tokenOut) external onlyTimelock {
-        (address token0, address token1) = tokenIn < tokenOut
-            ? (tokenIn, tokenOut)
-            : (tokenOut, tokenIn);
+        (address token0, address token1) = tokenIn < tokenOut ? (tokenIn, tokenOut) : (tokenOut, tokenIn);
 
         require(_whitelist[token0][token1], "PairWhitelist: not present");
         _whitelist[token0][token1] = false;
@@ -101,12 +97,9 @@ contract PairWhitelist {
         if (tokenIn == tokenOut || tokenIn == address(0) || tokenOut == address(0)) {
             return false;
         }
-        (address token0, address token1) = tokenIn < tokenOut
-            ? (tokenIn, tokenOut)
-            : (tokenOut, tokenIn);
+        (address token0, address token1) = tokenIn < tokenOut ? (tokenIn, tokenOut) : (tokenOut, tokenIn);
         return _whitelist[token0][token1];
     }
-
 
     /**
      * @notice Get all whitelisted pairs

@@ -35,16 +35,36 @@ contract DeployGovernor is Script {
 
         // Governor parameters
         uint256 votingDelay;
-        try vm.envUint("VOTING_DELAY") returns (uint256 v) { votingDelay = v; } catch { votingDelay = 1; }
+        try vm.envUint("VOTING_DELAY") returns (uint256 v) {
+            votingDelay = v;
+        }
+            catch {
+            votingDelay = 1;
+        }
 
         uint256 votingPeriod;
-        try vm.envUint("VOTING_PERIOD") returns (uint256 v) { votingPeriod = v; } catch { votingPeriod = 120; }
+        try vm.envUint("VOTING_PERIOD") returns (uint256 v) {
+            votingPeriod = v;
+        }
+            catch {
+            votingPeriod = 120;
+        }
 
         uint256 proposalThreshold;
-        try vm.envUint("PROPOSAL_THRESHOLD") returns (uint256 v) { proposalThreshold = v; } catch { proposalThreshold = 0; }
+        try vm.envUint("PROPOSAL_THRESHOLD") returns (uint256 v) {
+            proposalThreshold = v;
+        }
+            catch {
+            proposalThreshold = 0;
+        }
 
         uint256 quorumNumerator;
-        try vm.envUint("QUORUM_NUMERATOR") returns (uint256 v) { quorumNumerator = v; } catch { quorumNumerator = 4; }
+        try vm.envUint("QUORUM_NUMERATOR") returns (uint256 v) {
+            quorumNumerator = v;
+        }
+            catch {
+            quorumNumerator = 4;
+        }
 
         HuffyGovernor governor = new HuffyGovernor(
             "HuffyGovernor", votesToken, timelock, votingDelay, votingPeriod, proposalThreshold, quorumNumerator

@@ -19,4 +19,3 @@ contract BasicParamsValidator is ITradeValidator {
     }
 }
 
-
