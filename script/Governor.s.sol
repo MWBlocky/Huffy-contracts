@@ -37,32 +37,28 @@ contract DeployGovernor is Script {
         uint256 votingDelay;
         try vm.envUint("VOTING_DELAY") returns (uint256 v) {
             votingDelay = v;
-        }
-            catch {
+        } catch {
             votingDelay = 1;
         }
 
         uint256 votingPeriod;
         try vm.envUint("VOTING_PERIOD") returns (uint256 v) {
             votingPeriod = v;
-        }
-            catch {
+        } catch {
             votingPeriod = 120;
         }
 
         uint256 proposalThreshold;
         try vm.envUint("PROPOSAL_THRESHOLD") returns (uint256 v) {
             proposalThreshold = v;
-        }
-            catch {
+        } catch {
             proposalThreshold = 0;
         }
 
         uint256 quorumNumerator;
         try vm.envUint("QUORUM_NUMERATOR") returns (uint256 v) {
             quorumNumerator = v;
-        }
-            catch {
+        } catch {
             quorumNumerator = 4;
         }
 
