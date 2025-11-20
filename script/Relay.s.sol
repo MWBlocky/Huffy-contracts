@@ -8,7 +8,7 @@ import {Relay} from "../src/Relay.sol";
 contract DeployRelay is Script {
     function run() external {
         address pairWhitelist = vm.envAddress("PAIR_WHITELIST_ADDRESS");
-        address treasury = vm.envAddress("TREASURY_ADDRESS");
+        address payable treasury = payable(vm.envAddress("TREASURY_ADDRESS"));
         address saucerswapRouter = vm.envAddress("SAUCERSWAP_ROUTER");
         address daoAdmin = vm.envOr("DAO_ADMIN_ADDRESS", msg.sender);
 

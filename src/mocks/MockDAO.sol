@@ -38,7 +38,7 @@ contract MockDAO {
         owner = newOwner;
     }
 
-    function setTreasury(address _treasury) external onlyOwner {
+    function setTreasury(address payable _treasury) external onlyOwner {
         require(_treasury != address(0), "MockDAO: zero treasury");
         treasury = Treasury(_treasury);
         emit TreasurySet(_treasury);

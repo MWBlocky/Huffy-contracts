@@ -8,24 +8,24 @@ import {Treasury} from "../src/Treasury.sol";
 contract DeployTreasury is Script {
     function run() external {
         address htkToken = vm.envAddress("HTK_TOKEN_ADDRESS");
-        address saucerswapRouter = vm.envAddress("SAUCERSWAP_ROUTER");
+        address swapAdapter = vm.envOr("SWAP_ADAPTER_ADDRESS", address(0));
         address daoAdmin = vm.envOr("DAO_ADMIN_ADDRESS", msg.sender);
         address relay = vm.envOr("RELAY_ADDRESS", msg.sender);
 
         require(htkToken != address(0), "HTK_TOKEN_ADDRESS not set");
-        require(saucerswapRouter != address(0), "SAUCERSWAP_ROUTER not set");
+        require(swapAdapter != address(0), "SWAP_ADAPTER_ADDRESS not set");
         require(daoAdmin != address(0), "DAO_ADMIN_ADDRESS not set");
         require(relay != address(0), "RELAY_ADDRESS not set");
 
         console.log("Deployer:", msg.sender);
         console.log("HTK Token:", htkToken);
-        console.log("Saucerswap Router:", saucerswapRouter);
+        console.log("Swap Adapter:", swapAdapter);
         console.log("DAO Admin:", daoAdmin);
         console.log("Relay:", relay);
 
         vm.startBroadcast();
 
-        Treasury treasury = new Treasury(htkToken, saucerswapRouter, daoAdmin, relay);
+        Treasury treasury = new Treasury(htkToken, swapAdapter, daoAdmin, relay);
 
         vm.stopBroadcast();
 

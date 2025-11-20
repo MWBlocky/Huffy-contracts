@@ -7,7 +7,7 @@ import {MockRelay} from "../src/mocks/MockRelay.sol";
 
 contract RelayMock is Script {
     function run() external {
-        address treasury = 0x0000000000000000000000000000000000000000;
+        address payable treasury = payable(0x0000000000000000000000000000000000000000);
         vm.startBroadcast();
         MockRelay mockRelay = new MockRelay(treasury);
         vm.stopBroadcast();

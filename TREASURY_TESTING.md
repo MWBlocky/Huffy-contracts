@@ -3,12 +3,17 @@
 This project includes a Treasury contract that can hold tokens, execute buyback-and-burn operations via the Saucerswap router, perform generic token swaps, and allow DAO-controlled withdrawals.
 
 Important context from the code:
-- Treasury constructor: `Treasury(address htkToken, address saucerswapRouter, address daoAdmin, address relay)`
+- Treasury constructor: `Treasury(address htkToken, address swapAdapter, address daoAdmin, address relay)`
 - Roles:
   - `DEFAULT_ADMIN_ROLE` and `DAO_ROLE` are given to `daoAdmin` at deploy time.
   - `RELAY_ROLE` is given to `relay` at deploy time; only the relay can call swap and buyback.
-- Router interface: uses `swapExactTokensForTokens` as per Saucerswap.
+- Swaps route directly through an `ISwapAdapter` set on Treasury; the DAO can update the adapter via `setAdapter(address)`.
 - Mocks: `MockERC20`, `MockSaucerswapRouter` (with settable exchange rates), `MockDAO` (acts as DAO admin), and `MockRelay` (to invoke Treasury methods).
+
+To change adapters in production, the DAO calls `setAdapter(address)` on Treasury:
+```
+cast send $TREASURY_ADDRESS "setAdapter(address)" $NEW_ADAPTER --rpc-url $RPC_URL --private-key $DAO_ADMIN_PRIVATE_KEY
+```
 
 Important script roles:
 - script/DeployMocks.s.sol: Deploys a full testing environment on testnet, including mocks AND a Treasury instance wired to the mock router. Use this to prepare contracts and addresses for end-to-end testing.
@@ -119,30 +124,31 @@ Only an account with `RELAY_ROLE` can call `executeBuybackAndBurn`. You may invo
 
 Direct call (caller must have `RELAY_ROLE`):
 ```
-# Swap 100 USDC for HTK and burn the HTK received
-cast send $TREASURY_ADDRESS "executeBuybackAndBurn(address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# Swap 100 USDC for HTK and burn the HTK received (provide an encoded swap path)
+cast send $TREASURY_ADDRESS "executeBuybackAndBurn(address,bytes,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $USDC_TO_HTK_PATH 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 Via MockRelay (recommended during testing):
 ```
-cast send $RELAY "executeBuybackAndBurn(address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS 100000000 0 DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY "executeBuybackAndBurn(address,bytes,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $USDC_TO_HTK_PATH 100000000 0 DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 Notes:
 - Ensure the Treasury holds enough `tokenIn` (e.g., USDC) before calling.
+- `$USDC_TO_HTK_PATH` should contain the adapter-specific bytes-encoded path for the swap route.
 - `amountOutMin` can be set to 0 for testing, or a slippage-protected minimum.
 - The burn is implemented by transferring HTK to the `0xdead` address and emits `Burned(amount, initiator, timestamp)`.
 
 ### D) Generic trade-swap without burning (Relay only)
 
-Use `executeSwap(tokenIn, tokenOut, amountIn, amountOutMin, deadline)` to swap and keep proceeds in the Treasury.
+Use `executeSwap(tokenIn, tokenOut, path, amountIn, amountOutMin, deadline)` to swap and keep proceeds in the Treasury.
 
 Direct call on Treasury (requires `RELAY_ROLE`):
 ```
 # Example: swap USDC -> HTK
-cast send $TREASURY_ADDRESS "executeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $TREASURY_ADDRESS "executeSwap(address,address,bytes,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS $USDC_TO_HTK_PATH 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 Via MockRelay:
 ```
-cast send $RELAY_ADDRESS "executeSwap(address,address,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+cast send $RELAY_ADDRESS "executeSwap(address,address,bytes,uint256,uint256,uint256)" $USDC_TOKEN_ADDRESS $HTK_TOKEN_ADDRESS $USDC_TO_HTK_PATH 100000000 0 $DEADLINE --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 Check the Treasury's balances after the swap:
 ```

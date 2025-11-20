@@ -88,11 +88,11 @@ contract MockTreasury {
         return bal[token];
     }
 
-    function executeSwap(address, address, uint256, uint256, uint256) external pure returns (uint256) {
+    function executeSwap(address, address, bytes calldata, uint256, uint256, uint256) external pure returns (uint256) {
         return 0;
     }
 
-    function executeBuybackAndBurn(address, uint256, uint256, uint256) external pure returns (uint256) {
+    function executeBuybackAndBurn(address, bytes calldata, uint256, uint256, uint256) external pure returns (uint256) {
         return 0;
     }
 }

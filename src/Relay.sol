@@ -6,6 +6,7 @@ import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/Ree
 import {PairWhitelist} from "./PairWhitelist.sol";
 import {Treasury} from "./Treasury.sol";
 import {ISaucerswapRouter} from "./interfaces/ISaucerswapRouter.sol";
+import {ISwapAdapter} from "./interfaces/ISwapAdapter.sol";
 import {ParameterStore} from "./ParameterStore.sol";
 import {ITradeValidator} from "./interfaces/ITradeValidator.sol";
 
@@ -97,7 +98,7 @@ contract Relay is AccessControl, ReentrancyGuard {
 
     constructor(
         address _pairWhitelist,
-        address _treasury,
+        address payable _treasury,
         address _saucerswapRouter,
         address _parameterStore,
         address _admin,
@@ -129,18 +130,27 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @notice Submit a generic swap trade proposal
      * @param tokenIn Address of input token
      * @param tokenOut Address of output token
+     * @param path Encoded swap path for the adapter
      * @param amountIn Amount of tokenIn to swap
      * @param minAmountOut Minimum amount of tokenOut expected
      * @param deadline Swap deadline timestamp
      * @return amountOut Actual amount received
      */
-    function proposeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, uint256 deadline)
+    function proposeSwap(
+        address tokenIn,
+        address tokenOut,
+        bytes calldata path,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        uint256 deadline
+    )
         external
         onlyRole(TRADER_ROLE)
         nonReentrant
         returns (uint256 amountOut, bytes32[] memory reasonCodes)
     {
         emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, minAmountOut, block.timestamp);
+        require(path.length > 0, "Relay: Invalid path");
         ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
@@ -170,7 +180,16 @@ contract Relay is AccessControl, ReentrancyGuard {
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
-        amountOut = TREASURY.executeSwap(tokenIn, tokenOut, amountIn, minAmountOut, deadline);
+        amountOut = TREASURY.executeSwap(
+            ISwapAdapter.SwapKind.ExactTokensForTokens,
+            tokenIn,
+            tokenOut,
+            path,
+            amountIn,
+            0,
+            minAmountOut,
+            deadline
+        );
         emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
         return (amountOut, new bytes32[](0));
     }
@@ -178,12 +197,19 @@ contract Relay is AccessControl, ReentrancyGuard {
     /**
      * @notice Submit a buyback-and-burn trade proposal
      * @param tokenIn Address of input token
+     * @param path Encoded swap path for the adapter
      * @param amountIn Amount of tokenIn to swap for HTK
      * @param minAmountOut Minimum HTK to receive
      * @param deadline Swap deadline timestamp
      * @return burnedAmount Amount of HTK burned
      */
-    function proposeBuybackAndBurn(address tokenIn, uint256 amountIn, uint256 minAmountOut, uint256 deadline)
+    function proposeBuybackAndBurn(
+        address tokenIn,
+        bytes calldata path,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        uint256 deadline
+    )
         external
         onlyRole(TRADER_ROLE)
         nonReentrant
@@ -193,6 +219,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         emit TradeProposed(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
         );
+        require(path.length > 0, "Relay: Invalid path");
         ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
@@ -222,7 +249,7 @@ contract Relay is AccessControl, ReentrancyGuard {
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
-        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, amountIn, minAmountOut, deadline);
+        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, path, amountIn, minAmountOut, deadline);
         emit TradeForwarded(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, burnedAmount, block.timestamp
         );

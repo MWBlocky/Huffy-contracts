@@ -7,6 +7,7 @@ import {PairWhitelist} from "../src/PairWhitelist.sol";
 import {Treasury} from "../src/Treasury.sol";
 import {MockERC20} from "../src/mocks/MockERC20.sol";
 import {MockSaucerswapRouter} from "../src/mocks/MockSaucerswapRouter.sol";
+import {MockSwapAdapter} from "../src/mocks/MockSwapAdapter.sol";
 import {ParameterStore} from "../src/ParameterStore.sol";
 // Validators
 import {PairWhitelistValidator} from "../src/validators/PairWhitelistValidator.sol";
@@ -24,6 +25,7 @@ contract RelayTest is Test {
     MockERC20 public usdcToken;
     MockERC20 public usdtToken;
     MockSaucerswapRouter public router;
+    MockSwapAdapter public swapAdapter;
     ParameterStore public parameterStore;
 
     address public dao;
@@ -94,6 +96,13 @@ contract RelayTest is Test {
         uint256 timestamp
     );
 
+    function _encodePath(address tokenIn, address tokenOut) internal pure returns (bytes memory) {
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+        return abi.encode(path);
+    }
+
     function assertContains(bytes32[] memory arr, bytes32 val) internal pure {
         for (uint256 i = 0; i < arr.length; i++) {
             if (arr[i] == val) return;
@@ -111,14 +120,15 @@ contract RelayTest is Test {
         usdcToken = new MockERC20("USDC Token", "USDC", 6);
         usdtToken = new MockERC20("USDT Token", "USDT", 6);
 
-        // Deploy router
+        // Deploy router + adapter
         router = new MockSaucerswapRouter();
+        swapAdapter = new MockSwapAdapter(address(router));
 
         // Deploy PairWhitelist
         pairWhitelist = new PairWhitelist(dao);
 
         // Deploy Treasury
-        treasury = new Treasury(address(htkToken), address(router), dao, address(this)); // temp relay
+        treasury = new Treasury(address(htkToken), address(swapAdapter), dao, address(this)); // temp relay
 
         // Deploy ParameterStore
         parameterStore = new ParameterStore(dao, MAX_TRADE_BPS, MAX_SLIPPAGE_BPS, TRADE_COOLDOWN_SEC);
@@ -127,7 +137,7 @@ contract RelayTest is Test {
         address[] memory initialTraders = new address[](1);
         initialTraders[0] = trader;
         relay = new Relay(
-            address(pairWhitelist), address(treasury), address(router), address(parameterStore), dao, initialTraders
+            address(pairWhitelist), payable(address(treasury)), address(router), address(parameterStore), dao, initialTraders
         );
 
         // Update Treasury to use Relay
@@ -281,7 +291,8 @@ contract RelayTest is Test {
     function test_RevertIf_PairNotWhitelisted() public {
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
         assertEq(amountOut, 0);
         assertContains(reasonCodes, keccak256("PAIR_NOT_WHITELISTED"));
     }
@@ -301,7 +312,8 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
 
         assertGt(amountOut, 0);
         assertEq(reasonCodes.length, 0);
@@ -320,7 +332,8 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), excessiveAmount, 1e6, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), excessiveAmount, 1e6, block.timestamp + 1000);
         assertEq(amountOut, 0);
         assertContains(reasonCodes, keccak256("EXCEEDS_MAX_TRADE_SIZE"));
     }
@@ -335,7 +348,12 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         relay.proposeSwap(
-            address(usdcToken), address(usdtToken), maxAllowed, maxAllowed * 95 / 100, block.timestamp + 1000
+            address(usdcToken),
+            address(usdtToken),
+            _encodePath(address(usdcToken), address(usdtToken)),
+            maxAllowed,
+            maxAllowed * 95 / 100,
+            block.timestamp + 1000
         );
     }
 
@@ -352,7 +370,8 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
         assertEq(amountOut, 0);
         assertContains(reasonCodes, keccak256("EXCEEDS_MAX_SLIPPAGE"));
     }
@@ -367,7 +386,8 @@ contract RelayTest is Test {
         uint256 minAmountOut = (amountIn * 96) / 100;
 
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
     }
 
     /* ============ Cooldown Enforcement Tests ============ */
@@ -382,12 +402,14 @@ contract RelayTest is Test {
 
         // First trade
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
 
         // Immediate second trade (should fail with validator reason)
         vm.prank(trader);
         (uint256 amountOut2, bytes32[] memory reasonCodes2) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
         assertEq(amountOut2, 0);
         assertContains(reasonCodes2, keccak256("COOLDOWN_NOT_ELAPSED"));
     }
@@ -402,14 +424,16 @@ contract RelayTest is Test {
 
         // First trade
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
 
         // Advance time past cooldown
         vm.warp(block.timestamp + TRADE_COOLDOWN_SEC + 1);
 
         // Second trade (should succeed)
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
     }
 
     function test_GetCooldownRemaining() public {
@@ -421,7 +445,8 @@ contract RelayTest is Test {
 
         // Execute trade
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
 
         assertEq(relay.getCooldownRemaining(), TRADE_COOLDOWN_SEC);
 
@@ -449,7 +474,13 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 burnedAmount, bytes32[] memory reasonCodes) =
-            relay.proposeBuybackAndBurn(address(usdcToken), amountIn, minAmountOut, block.timestamp + 1000);
+            relay.proposeBuybackAndBurn(
+                address(usdcToken),
+                _encodePath(address(usdcToken), address(htkToken)),
+                amountIn,
+                minAmountOut,
+                block.timestamp + 1000
+            );
 
         assertGt(burnedAmount, 0);
         assertEq(reasonCodes.length, 0);
@@ -458,7 +489,13 @@ contract RelayTest is Test {
     function test_RevertIf_BuybackPairNotWhitelisted() public {
         vm.prank(trader);
         (uint256 burnedAmount, bytes32[] memory reasonCodes) =
-            relay.proposeBuybackAndBurn(address(usdcToken), 1000e6, 1900e6, block.timestamp + 1000);
+            relay.proposeBuybackAndBurn(
+                address(usdcToken),
+                _encodePath(address(usdcToken), address(htkToken)),
+                1000e6,
+                1900e6,
+                block.timestamp + 1000
+            );
         assertEq(burnedAmount, 0);
         assertContains(reasonCodes, keccak256("PAIR_NOT_WHITELISTED"));
     }
@@ -471,7 +508,8 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), 0, 100e6, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 0, 100e6, block.timestamp + 1000);
         assertEq(amountOut, 0);
         assertContains(reasonCodes, keccak256("INVALID_PARAMETERS"));
     }
@@ -482,7 +520,8 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 0, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 0, block.timestamp + 1000);
         assertEq(amountOut, 0);
         assertContains(reasonCodes, keccak256("INVALID_PARAMETERS"));
     }
@@ -498,7 +537,8 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         (uint256 amountOut, bytes32[] memory reasonCodes) =
-            relay.proposeSwap(address(usdcToken), address(usdtToken), excessiveAmount, 1e6, block.timestamp + 1000);
+            relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), excessiveAmount, 1e6, block.timestamp + 1000);
         assertEq(amountOut, 0);
         assertContains(reasonCodes, keccak256("INSUFFICIENT_TREASURY_BALANCE"));
     }
@@ -511,7 +551,8 @@ contract RelayTest is Test {
 
         vm.prank(unauthorized);
         vm.expectRevert();
-        relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
     }
 
     /* ============ Risk Parameters View Tests ============ */
@@ -559,7 +600,8 @@ contract RelayTest is Test {
         emit TradeForwarded(trader, Relay.TradeType.SWAP, address(usdcToken), address(usdtToken), amountIn, 0, 0);
 
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), amountIn, minAmountOut, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), amountIn, minAmountOut, block.timestamp + 1000);
     }
 
     /* ============ Multiple Traders Tests ============ */
@@ -579,12 +621,14 @@ contract RelayTest is Test {
 
         // Both traders can trade (respecting cooldown)
         vm.prank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
 
         vm.warp(block.timestamp + TRADE_COOLDOWN_SEC + 1);
 
         vm.prank(trader2);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
     }
 
     /* ============ Edge Cases ============ */
@@ -600,8 +644,10 @@ contract RelayTest is Test {
 
         // Execute multiple trades immediately
         vm.startPrank(trader);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
-        relay.proposeSwap(address(usdcToken), address(usdtToken), 1000e6, 990e6, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
+        relay.proposeSwap(address(usdcToken), address(usdtToken),
+                _encodePath(address(usdcToken), address(usdtToken)), 1000e6, 990e6, block.timestamp + 1000);
         vm.stopPrank();
     }
 
@@ -618,7 +664,12 @@ contract RelayTest is Test {
 
         vm.prank(trader);
         relay.proposeSwap(
-            address(usdcToken), address(usdtToken), treasuryBalance, treasuryBalance * 95 / 100, block.timestamp + 1000
+            address(usdcToken),
+            address(usdtToken),
+            _encodePath(address(usdcToken), address(usdtToken)),
+            treasuryBalance,
+            treasuryBalance * 95 / 100,
+            block.timestamp + 1000
         );
     }
 }
