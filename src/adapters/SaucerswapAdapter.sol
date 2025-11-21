@@ -7,7 +7,6 @@ import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable
 import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-// --- Hedera HTS (association) ---
 interface IHederaTokenService {
     function associateToken(address account, address token) external returns (int64);
 }
@@ -42,7 +41,6 @@ contract SaucerswapAdapter is ISwapAdapter, Ownable {
             amountInUsed = msg.value;
             amountOutReceived = outAmt;
             _sweepHBAR(req.recipient);
-
         } else if (req.kind == SwapKind.HBARForExactTokens) {
             uint256 inAmt = proxy.swapHBARForExactTokens{value: msg.value}(
                 req.path, req.recipient, req.deadline, req.amountOut, req.amountInMaximum
@@ -50,13 +48,9 @@ contract SaucerswapAdapter is ISwapAdapter, Ownable {
             amountInUsed = inAmt;
             amountOutReceived = req.amountOut;
             _sweepHBAR(req.recipient);
-
-        // TOKEN-in flows (naprawione źródło revertu)
         } else if (req.kind == SwapKind.ExactTokensForTokens) {
-            // 1) Pull z Dex (msg.sender) do Adaptera
             IERC20 t = IERC20(req.tokenIn);
             t.safeTransferFrom(msg.sender, address(this), req.amountIn);
-            // 2) Approve dla Proxy; Proxy zaciągnie z Adaptera
             t.forceApprove(address(proxy), 0);
             t.forceApprove(address(proxy), req.amountIn);
 
@@ -64,17 +58,13 @@ contract SaucerswapAdapter is ISwapAdapter, Ownable {
                 req.tokenIn, req.amountIn, req.path, req.recipient, req.deadline, req.amountOutMinimum
             );
 
-            // 3) Porządkowanie approve
             t.forceApprove(address(proxy), 0);
 
             amountInUsed = req.amountIn;
             amountOutReceived = outAmt2;
-
         } else if (req.kind == SwapKind.TokensForExactTokens) {
             IERC20 t2 = IERC20(req.tokenIn);
-            // 1) Pull MAX z Dex do Adaptera (by Proxy mogło pobrać ile trzeba)
             t2.safeTransferFrom(msg.sender, address(this), req.amountInMaximum);
-            // 2) Approve MAX dla Proxy
             t2.forceApprove(address(proxy), 0);
             t2.forceApprove(address(proxy), req.amountInMaximum);
 
@@ -82,16 +72,13 @@ contract SaucerswapAdapter is ISwapAdapter, Ownable {
                 req.tokenIn, req.amountInMaximum, req.path, req.recipient, req.deadline, req.amountOut
             );
 
-            // 3) Cofnij niewykorzystany MAX z Adaptera do Dexa (msg.sender)
             if (req.amountInMaximum > inAmt2) {
                 t2.safeTransfer(msg.sender, req.amountInMaximum - inAmt2);
             }
-            // 4) Porządkowanie approve
             t2.forceApprove(address(proxy), 0);
 
             amountInUsed = inAmt2;
             amountOutReceived = req.amountOut;
-
         } else if (req.kind == SwapKind.ExactTokensForHBAR) {
             IERC20 t3 = IERC20(req.tokenIn);
             t3.safeTransferFrom(msg.sender, address(this), req.amountIn);
@@ -106,7 +93,6 @@ contract SaucerswapAdapter is ISwapAdapter, Ownable {
 
             amountInUsed = req.amountIn;
             amountOutReceived = outHBAR;
-
         } else if (req.kind == SwapKind.TokensForExactHBAR) {
             IERC20 t4 = IERC20(req.tokenIn);
             t4.safeTransferFrom(msg.sender, address(this), req.amountInMaximum);
@@ -124,7 +110,6 @@ contract SaucerswapAdapter is ISwapAdapter, Ownable {
 
             amountInUsed = inAmt3;
             amountOutReceived = req.amountOut;
-
         } else {
             revert UnsupportedKind();
         }

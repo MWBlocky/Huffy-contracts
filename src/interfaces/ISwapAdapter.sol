@@ -27,8 +27,5 @@ interface ISwapAdapter {
         uint256 amountOutMinimum;
     }
 
-    function swap(SwapRequest calldata req)
-        external
-        payable
-        returns (uint256 amountInUsed, uint256 amountOutReceived);
+    function swap(SwapRequest calldata req) external payable returns (uint256 amountInUsed, uint256 amountOutReceived);
 }

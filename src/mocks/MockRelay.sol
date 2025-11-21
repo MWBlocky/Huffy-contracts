@@ -22,10 +22,7 @@ contract MockRelay {
         uint256 amountIn,
         uint256 amountOutMin,
         uint256 deadline
-    )
-        external
-        returns (uint256)
-    {
+    ) external returns (uint256) {
         return treasury.executeBuybackAndBurn(tokenIn, path, amountIn, amountOutMin, deadline);
     }
 
@@ -38,10 +35,7 @@ contract MockRelay {
         uint256 amountOut,
         uint256 amountOutMin,
         uint256 deadline
-    )
-        external
-        returns (uint256)
-    {
+    ) external returns (uint256) {
         return treasury.executeSwap(kind, tokenIn, tokenOut, path, amountIn, amountOut, amountOutMin, deadline);
     }
 }

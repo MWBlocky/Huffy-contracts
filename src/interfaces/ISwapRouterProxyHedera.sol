@@ -2,12 +2,10 @@
 pragma solidity ^0.8.20;
 
 interface ISwapRouterProxyHedera {
-    function swapExactHBARForTokens(
-        bytes calldata path,
-        address recipient,
-        uint256 deadline,
-        uint256 amountOutMinimum
-    ) external payable returns (uint256 amountOut);
+    function swapExactHBARForTokens(bytes calldata path, address recipient, uint256 deadline, uint256 amountOutMinimum)
+        external
+        payable
+        returns (uint256 amountOut);
 
     function swapHBARForExactTokens(
         bytes calldata path,

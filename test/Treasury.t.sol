@@ -490,7 +490,14 @@ contract TreasuryTest is Test {
         vm.expectRevert(bytes("Treasury: Expired deadline"));
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
         mockRelay.executeSwap(
-            ISwapAdapter.SwapKind.ExactTokensForTokens, address(usdcToken), address(htkToken), path, amountIn, 0, 0, deadline
+            ISwapAdapter.SwapKind.ExactTokensForTokens,
+            address(usdcToken),
+            address(htkToken),
+            path,
+            amountIn,
+            0,
+            0,
+            deadline
         );
     }
 
@@ -500,7 +507,14 @@ contract TreasuryTest is Test {
         vm.expectRevert(bytes("Treasury: Insufficient balance"));
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
         mockRelay.executeSwap(
-            ISwapAdapter.SwapKind.ExactTokensForTokens, address(usdcToken), address(htkToken), path, amountIn, 0, 0, deadline
+            ISwapAdapter.SwapKind.ExactTokensForTokens,
+            address(usdcToken),
+            address(htkToken),
+            path,
+            amountIn,
+            0,
+            0,
+            deadline
         );
     }
 

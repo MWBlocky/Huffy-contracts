@@ -41,12 +41,48 @@ contract SwapRouterProxyHedera is Ownable, ReentrancyGuard {
 
     address private constant HTS = address(0x167);
 
-    event SwapExactHBARForTokens(address indexed sender, bytes path, address indexed recipient, uint256 amountInTinybar, uint256 amountOut);
-    event SwapHBARForExactTokens(address indexed sender, bytes pathReversed, address indexed recipient, uint256 amountOut, uint256 amountInTinybar);
-    event SwapExactTokensForTokens(address indexed sender, address indexed tokenIn, bytes path, address indexed recipient, uint256 amountIn, uint256 amountOut);
-    event SwapTokensForExactTokens(address indexed sender, address indexed tokenIn, bytes pathReversed, address indexed recipient, uint256 amountOut, uint256 amountIn);
-    event SwapExactTokensForHBAR(address indexed sender, address indexed tokenIn, bytes pathToWHBAR, address indexed recipient, uint256 amountIn, uint256 amountOutTinybar);
-    event SwapTokensForExactHBAR(address indexed sender, address indexed tokenIn, bytes pathReversedToWHBAR, address indexed recipient, uint256 amountOutTinybar, uint256 amountIn);
+    event SwapExactHBARForTokens(
+        address indexed sender, bytes path, address indexed recipient, uint256 amountInTinybar, uint256 amountOut
+    );
+    event SwapHBARForExactTokens(
+        address indexed sender,
+        bytes pathReversed,
+        address indexed recipient,
+        uint256 amountOut,
+        uint256 amountInTinybar
+    );
+    event SwapExactTokensForTokens(
+        address indexed sender,
+        address indexed tokenIn,
+        bytes path,
+        address indexed recipient,
+        uint256 amountIn,
+        uint256 amountOut
+    );
+    event SwapTokensForExactTokens(
+        address indexed sender,
+        address indexed tokenIn,
+        bytes pathReversed,
+        address indexed recipient,
+        uint256 amountOut,
+        uint256 amountIn
+    );
+    event SwapExactTokensForHBAR(
+        address indexed sender,
+        address indexed tokenIn,
+        bytes pathToWHBAR,
+        address indexed recipient,
+        uint256 amountIn,
+        uint256 amountOutTinybar
+    );
+    event SwapTokensForExactHBAR(
+        address indexed sender,
+        address indexed tokenIn,
+        bytes pathReversedToWHBAR,
+        address indexed recipient,
+        uint256 amountOutTinybar,
+        uint256 amountIn
+    );
     event Associated(address indexed token);
     event BatchAssociated(uint256 count);
 
@@ -62,7 +98,6 @@ contract SwapRouterProxyHedera is Ownable, ReentrancyGuard {
         router = _router;
         WHBAR = _whbar;
     }
-
 
     function swapExactHBARForTokens(bytes calldata path, address recipient, uint256 deadline, uint256 amountOutMinimum)
         external

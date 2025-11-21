@@ -143,12 +143,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         uint256 amountIn,
         uint256 minAmountOut,
         uint256 deadline
-    )
-        external
-        onlyRole(TRADER_ROLE)
-        nonReentrant
-        returns (uint256 amountOut, bytes32[] memory reasonCodes)
-    {
+    ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 amountOut, bytes32[] memory reasonCodes) {
         emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, minAmountOut, block.timestamp);
         require(path.length > 0, "Relay: Invalid path");
         ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
@@ -181,14 +176,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         );
         lastTradeTimestamp = block.timestamp;
         amountOut = TREASURY.executeSwap(
-            ISwapAdapter.SwapKind.ExactTokensForTokens,
-            tokenIn,
-            tokenOut,
-            path,
-            amountIn,
-            0,
-            minAmountOut,
-            deadline
+            ISwapAdapter.SwapKind.ExactTokensForTokens, tokenIn, tokenOut, path, amountIn, 0, minAmountOut, deadline
         );
         emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
         return (amountOut, new bytes32[](0));
@@ -209,12 +197,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         uint256 amountIn,
         uint256 minAmountOut,
         uint256 deadline
-    )
-        external
-        onlyRole(TRADER_ROLE)
-        nonReentrant
-        returns (uint256 burnedAmount, bytes32[] memory reasonCodes)
-    {
+    ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
         address htkToken = TREASURY.HTK_TOKEN();
         emit TradeProposed(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp

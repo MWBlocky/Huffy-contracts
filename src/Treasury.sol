@@ -17,7 +17,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
     // Roles
     bytes32 public constant RELAY_ROLE = keccak256("RELAY_ROLE");
-    bytes32 public constant DAO_ROLE   = keccak256("DAO_ROLE");
+    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
 
     // Immutable config
     address public immutable HTK_TOKEN;
@@ -28,10 +28,28 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
     // Events
     event Deposited(address indexed token, address indexed depositor, uint256 amount, uint256 timestamp);
-    event Withdrawn(address indexed token, address indexed recipient, uint256 amount, address indexed initiator, uint256 timestamp);
-    event BuybackExecuted(address indexed tokenIn, uint256 amountIn, uint256 htkReceived, address indexed initiator, uint256 timestamp);
-    event SwapExecuted(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut, address indexed initiator, uint256 timestamp);
-    event SwapForExactExecuted(address indexed tokenIn, address indexed tokenOut, uint256 amountInUsed, uint256 amountOut, address indexed initiator, uint256 timestamp);
+    event Withdrawn(
+        address indexed token, address indexed recipient, uint256 amount, address indexed initiator, uint256 timestamp
+    );
+    event BuybackExecuted(
+        address indexed tokenIn, uint256 amountIn, uint256 htkReceived, address indexed initiator, uint256 timestamp
+    );
+    event SwapExecuted(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        address indexed initiator,
+        uint256 timestamp
+    );
+    event SwapForExactExecuted(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint256 amountInUsed,
+        uint256 amountOut,
+        address indexed initiator,
+        uint256 timestamp
+    );
     event Burned(uint256 amount, address indexed initiator, uint256 timestamp);
     event RelayUpdated(address indexed oldRelay, address indexed newRelay, uint256 timestamp);
     event AdapterUpdated(address indexed oldAdapter, address indexed newAdapter, uint256 timestamp);
@@ -82,12 +100,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         uint256 amountIn,
         uint256 amountOutMin,
         uint256 deadline
-    )
-        external
-        onlyRole(RELAY_ROLE)
-        nonReentrant
-        returns (uint256 burnedAmount)
-    {
+    ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
         require(tokenIn != address(0), "Treasury: Invalid token");
         require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
@@ -120,10 +133,8 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
         // Ignore msg.value for token-in flows to avoid accidental funding
         if (
-            kind == ISwapAdapter.SwapKind.ExactTokensForTokens
-                || kind == ISwapAdapter.SwapKind.TokensForExactTokens
-                || kind == ISwapAdapter.SwapKind.ExactTokensForHBAR
-                || kind == ISwapAdapter.SwapKind.TokensForExactHBAR
+            kind == ISwapAdapter.SwapKind.ExactTokensForTokens || kind == ISwapAdapter.SwapKind.TokensForExactTokens
+                || kind == ISwapAdapter.SwapKind.ExactTokensForHBAR || kind == ISwapAdapter.SwapKind.TokensForExactHBAR
         ) {
             require(msg.value == 0, "Treasury: Unexpected value");
         }
@@ -186,7 +197,9 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
         uint256 approveAmount;
         if (kind == ISwapAdapter.SwapKind.ExactTokensForTokens || kind == ISwapAdapter.SwapKind.ExactTokensForHBAR) {
-            require(tokenOut != address(0) || kind == ISwapAdapter.SwapKind.ExactTokensForHBAR, "Treasury: Invalid tokenOut");
+            require(
+                tokenOut != address(0) || kind == ISwapAdapter.SwapKind.ExactTokensForHBAR, "Treasury: Invalid tokenOut"
+            );
             if (kind == ISwapAdapter.SwapKind.ExactTokensForTokens) {
                 require(tokenIn != tokenOut, "Treasury: Same token");
             }
@@ -196,7 +209,9 @@ contract Treasury is AccessControl, ReentrancyGuard {
         } else if (
             kind == ISwapAdapter.SwapKind.TokensForExactTokens || kind == ISwapAdapter.SwapKind.TokensForExactHBAR
         ) {
-            require(tokenOut != address(0) || kind == ISwapAdapter.SwapKind.TokensForExactHBAR, "Treasury: Invalid tokenOut");
+            require(
+                tokenOut != address(0) || kind == ISwapAdapter.SwapKind.TokensForExactHBAR, "Treasury: Invalid tokenOut"
+            );
             if (kind == ISwapAdapter.SwapKind.TokensForExactTokens) {
                 require(tokenIn != tokenOut, "Treasury: Same token");
             }
@@ -248,12 +263,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
         uint256 amountOut,
         uint256 amountInMaximum,
         uint256 deadline
-    )
-        external
-        onlyRole(RELAY_ROLE)
-        nonReentrant
-        returns (uint256 amountInUsed)
-    {
+    ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 amountInUsed) {
         require(tokenIn != address(0) && tokenOut != address(0), "Treasury: Invalid token");
         require(tokenIn != tokenOut, "Treasury: Same token");
         require(amountOut > 0 && amountInMaximum > 0, "Treasury: Zero amount");
@@ -276,7 +286,9 @@ contract Treasury is AccessControl, ReentrancyGuard {
             amountOutMinimum: 0
         });
 
-        (amountInUsed, /*amountOutReceived*/) = adapter.swap(request);
+        (
+            amountInUsed, /*amountOutReceived*/
+        ) = adapter.swap(request);
         // Adapter zwróci nadwyżkę tokenIn → balans Treasury się zgadza
 
         emit SwapForExactExecuted(tokenIn, tokenOut, amountInUsed, amountOut, msg.sender, block.timestamp);
