@@ -146,7 +146,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
             require(amountOutMin > 0, "Treasury: Zero minOut");
             require(msg.value == amountIn, "Treasury: msg.value mismatch");
 
-            ISwapAdapter.SwapRequest memory request = ISwapAdapter.SwapRequest({
+            ISwapAdapter.SwapRequest memory hbarExactInRequest = ISwapAdapter.SwapRequest({
                 kind: kind,
                 tokenIn: address(0),
                 path: path,
@@ -158,7 +158,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
                 amountOutMinimum: amountOutMin
             });
 
-            (, amountReceived) = adapter.swap{value: msg.value}(request);
+            (, amountReceived) = adapter.swap{value: msg.value}(hbarExactInRequest);
             require(amountReceived >= amountOutMin, "Treasury: Insufficient output");
 
             emit SwapExecuted(address(0), tokenOut, amountIn, amountReceived, msg.sender, block.timestamp);
@@ -171,7 +171,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
             require(amountIn > 0, "Treasury: Zero maxIn");
             require(msg.value == amountIn, "Treasury: msg.value mismatch");
 
-            ISwapAdapter.SwapRequest memory request = ISwapAdapter.SwapRequest({
+            ISwapAdapter.SwapRequest memory hbarExactOutRequest = ISwapAdapter.SwapRequest({
                 kind: kind,
                 tokenIn: address(0),
                 path: path,
@@ -183,7 +183,8 @@ contract Treasury is AccessControl, ReentrancyGuard {
                 amountOutMinimum: 0
             });
 
-            (uint256 amountInUsedHBAR, uint256 amountOutReceivedHBAR) = adapter.swap{value: msg.value}(request);
+            (uint256 amountInUsedHBAR, uint256 amountOutReceivedHBAR) =
+                adapter.swap{value: msg.value}(hbarExactOutRequest);
             require(amountOutReceivedHBAR >= amountOut, "Treasury: Insufficient output");
             require(amountInUsedHBAR <= amountIn, "Treasury: overspent");
             amountReceived = amountOutReceivedHBAR;

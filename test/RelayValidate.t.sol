@@ -100,7 +100,7 @@ contract MockTreasury {
 contract TestRelay is Relay {
     constructor(
         address _pairWhitelist,
-        address _treasury,
+        address payable _treasury,
         address _router,
         address _paramStore,
         address _admin,
@@ -141,7 +141,7 @@ contract RelayValidateTest is Test {
 
         address[] memory traders = new address[](1);
         traders[0] = trader;
-        relay = new TestRelay(address(pw), address(treasury), address(router), address(params), admin, traders);
+        relay = new TestRelay(address(pw), payable(address(treasury)), address(router), address(params), admin, traders);
 
         // Add validators
         relay.addValidator(address(new PairWhitelistValidator()));
