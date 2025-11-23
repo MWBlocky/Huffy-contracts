@@ -20,10 +20,11 @@ contract MockRelay {
         address tokenIn,
         bytes calldata path,
         uint256 amountIn,
-        uint256 amountOutMin,
+        uint256 minHtkOut,
+        uint256 maxHtkPriceD18,
         uint256 deadline
     ) external returns (uint256) {
-        return treasury.executeBuybackAndBurn(tokenIn, path, amountIn, amountOutMin, deadline);
+        return treasury.executeBuybackAndBurn(tokenIn, path, amountIn, minHtkOut, maxHtkPriceD18, deadline);
     }
 
     function executeSwap(

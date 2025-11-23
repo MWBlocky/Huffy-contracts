@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import {AccessControl} from "../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Metadata} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {ISwapAdapter} from "./interfaces/ISwapAdapter.sol";
 
@@ -87,22 +88,48 @@ contract Treasury is AccessControl, ReentrancyGuard {
     // ------------ Buyback & burn (ExactTokensForTokens) ------------
 
     function executeBuybackAndBurn(
-        address tokenIn,
+        address tokenToSell,
         bytes calldata path,
         uint256 amountIn,
-        uint256 amountOutMin,
+        uint256 minHtkOut,
+        uint256 maxHtkPriceD18,
         uint256 deadline
     ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
-        require(tokenIn != address(0), "Treasury: Invalid token");
-        require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
+        require(tokenToSell != address(0), "Treasury: Invalid token");
+        require(tokenToSell != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
+        require(minHtkOut > 0, "Treasury: Zero minOut");
         require(deadline >= block.timestamp, "Treasury: Expired deadline");
         require(path.length > 0, "Treasury: Invalid path");
-        require(IERC20(tokenIn).balanceOf(address(this)) >= amountIn, "Treasury: Insufficient balance");
+        require(IERC20(tokenToSell).balanceOf(address(this)) >= amountIn, "Treasury: Insufficient balance");
 
-        uint256 htkReceived = _buybackExact(tokenIn, path, amountIn, amountOutMin, deadline);
-        emit BuybackExecuted(tokenIn, amountIn, htkReceived, msg.sender, block.timestamp);
+        // Price guard
+        uint8 inDec = IERC20Metadata(tokenToSell).decimals();
+        uint8 htkDec = IERC20Metadata(HTK_TOKEN).decimals();
+        uint256 amountIn18 = inDec <= 18 ? amountIn * (10 ** (18 - inDec)) : amountIn / (10 ** (inDec - 18));
+        uint256 htkOut18 = htkDec <= 18 ? minHtkOut * (10 ** (18 - htkDec)) : minHtkOut / (10 ** (htkDec - 18));
+        uint256 priceD18 = (amountIn18 * 1e18) / htkOut18; // tokenToSell per HTK
+        require(priceD18 <= maxHtkPriceD18, "Treasury: HTK price too high");
 
+        IERC20(tokenToSell).forceApprove(address(adapter), 0);
+        IERC20(tokenToSell).forceApprove(address(adapter), amountIn);
+
+        ISwapAdapter.SwapRequest memory request = ISwapAdapter.SwapRequest({
+            kind: ISwapAdapter.SwapKind.ExactTokensForTokens,
+            tokenIn: tokenToSell,
+            path: path,
+            recipient: address(this),
+            deadline: deadline,
+            amountIn: amountIn,
+            amountOut: 0,
+            amountInMaximum: amountIn,
+            amountOutMinimum: minHtkOut
+        });
+
+        (, uint256 htkReceived) = adapter.swap(request);
+        require(htkReceived >= minHtkOut, "Treasury: Insufficient output");
+
+        emit BuybackExecuted(tokenToSell, amountIn, htkReceived, msg.sender, block.timestamp);
         burnedAmount = _burn(htkReceived);
         return burnedAmount;
     }
@@ -273,33 +300,6 @@ contract Treasury is AccessControl, ReentrancyGuard {
     }
 
     // ------------ Internal ------------
-
-    function _buybackExact(
-        address tokenIn,
-        bytes calldata path,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        uint256 deadline
-    ) private returns (uint256 htkReceived) {
-        IERC20(tokenIn).forceApprove(address(adapter), 0);
-        IERC20(tokenIn).forceApprove(address(adapter), amountIn);
-
-        ISwapAdapter.SwapRequest memory request = ISwapAdapter.SwapRequest({
-            kind: ISwapAdapter.SwapKind.ExactTokensForTokens,
-            tokenIn: tokenIn,
-            path: path,
-            recipient: address(this),
-            deadline: deadline,
-            amountIn: amountIn,
-            amountOut: 0,
-            amountInMaximum: amountIn,
-            amountOutMinimum: amountOutMin
-        });
-
-        (, htkReceived) = adapter.swap(request);
-        require(htkReceived >= amountOutMin, "Treasury: Insufficient output");
-        return htkReceived;
-    }
 
     function _burn(uint256 amount) private returns (uint256) {
         require(amount > 0, "Treasury: Zero burn amount");

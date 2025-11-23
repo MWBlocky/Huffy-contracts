@@ -188,6 +188,7 @@ contract Relay is AccessControl, ReentrancyGuard {
      * @param path Encoded swap path for the adapter
      * @param amountIn Amount of tokenIn to swap for HTK
      * @param minAmountOut Minimum HTK to receive
+     * @param maxHtkPriceD18 Max acceptable HTK price (tokenIn per HTK, 1e18-scaled)
      * @param deadline Swap deadline timestamp
      * @return burnedAmount Amount of HTK burned
      */
@@ -196,6 +197,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         bytes calldata path,
         uint256 amountIn,
         uint256 minAmountOut,
+        uint256 maxHtkPriceD18,
         uint256 deadline
     ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
         address htkToken = TREASURY.HTK_TOKEN();
@@ -232,7 +234,7 @@ contract Relay is AccessControl, ReentrancyGuard {
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
-        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, path, amountIn, minAmountOut, deadline);
+        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, path, amountIn, minAmountOut, maxHtkPriceD18, deadline);
         emit TradeForwarded(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, burnedAmount, block.timestamp
         );

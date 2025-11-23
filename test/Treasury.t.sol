@@ -248,7 +248,7 @@ contract TreasuryTest is Test {
         emit Burned(expectedHtk, address(mockRelay), block.timestamp);
 
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, expectedHtk, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, expectedHtk, type(uint256).max, deadline);
 
         // Check HTK was burned (sent to dead address)
         assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
@@ -263,7 +263,7 @@ contract TreasuryTest is Test {
         uint256 deadline = block.timestamp + 3600;
 
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, amount, expectedHtk, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, amount, expectedHtk, type(uint256).max, deadline);
 
         assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
     }
@@ -274,15 +274,14 @@ contract TreasuryTest is Test {
 
         vm.expectRevert(bytes("Treasury: Cannot swap HTK for HTK"));
         bytes memory path = _encodePath(address(htkToken), address(htkToken));
-        vm.expectRevert(bytes("Treasury: Cannot swap HTK for HTK"));
-        mockRelay.executeBuybackAndBurn(address(htkToken), path, buybackAmount, 0, deadline);
+        mockRelay.executeBuybackAndBurn(address(htkToken), path, buybackAmount, 1, type(uint256).max, deadline);
     }
 
     function test_RevertWhen_BuybackWithEmptyPath() public {
         uint256 buybackAmount = 1000e6;
         uint256 deadline = block.timestamp + 3600;
         vm.expectRevert(bytes("Treasury: Invalid path"));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), bytes(""), buybackAmount, 0, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), bytes(""), buybackAmount, 1, type(uint256).max, deadline);
     }
 
     function test_RevertWhen_BuybackExpiredDeadline() public {
@@ -291,7 +290,7 @@ contract TreasuryTest is Test {
 
         vm.expectRevert(bytes("Treasury: Expired deadline"));
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, 0, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, 1, type(uint256).max, deadline);
     }
 
     function test_RevertWhen_BuybackInsufficientBalance() public {
@@ -300,7 +299,7 @@ contract TreasuryTest is Test {
 
         vm.expectRevert(bytes("Treasury: Insufficient balance"));
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, 0, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, 1, type(uint256).max, deadline);
     }
 
     /* ============ Access Control Tests ============ */
@@ -376,7 +375,7 @@ contract TreasuryTest is Test {
         uint256 deadline = block.timestamp + 3600;
 
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, expectedHtk, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, expectedHtk, type(uint256).max, deadline);
 
         // 3. Verify final state
         uint256 remainingUsdc = 12_000e6; // 10000 + 5000 - 3000
@@ -390,9 +389,8 @@ contract TreasuryTest is Test {
         uint256 deadline = block.timestamp + 3600;
 
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount1, 0, deadline);
-
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount2, 0, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount1, 1, type(uint256).max, deadline);
+        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount2, 1, type(uint256).max, deadline);
 
         uint256 totalBurned = 6000e6; // (1000 + 2000) * 2
         assertEq(htkToken.balanceOf(address(0xdead)), totalBurned);
@@ -503,6 +501,7 @@ contract TreasuryTest is Test {
 
     function test_RevertWhen_SwapInsufficientBalance() public {
         uint256 amountIn = 20_000e6;
+        uint256 minOut = 1;
         uint256 deadline = block.timestamp + 3600;
         vm.expectRevert(bytes("Treasury: Insufficient balance"));
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
@@ -513,7 +512,7 @@ contract TreasuryTest is Test {
             path,
             amountIn,
             0,
-            0,
+            minOut,
             deadline
         );
     }

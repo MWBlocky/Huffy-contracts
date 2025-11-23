@@ -538,6 +538,7 @@ contract RelayTest is Test {
             _encodePath(address(usdcToken), address(htkToken)),
             amountIn,
             minAmountOut,
+            type(uint256).max,
             block.timestamp + 1000
         );
 
@@ -552,6 +553,7 @@ contract RelayTest is Test {
             _encodePath(address(usdcToken), address(htkToken)),
             1000e6,
             1900e6,
+            type(uint256).max,
             block.timestamp + 1000
         );
         assertEq(burnedAmount, 0);
