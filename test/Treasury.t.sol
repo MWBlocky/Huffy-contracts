@@ -248,7 +248,9 @@ contract TreasuryTest is Test {
         emit Burned(expectedHtk, address(mockRelay), block.timestamp);
 
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, expectedHtk, type(uint256).max, deadline);
+        mockRelay.executeBuybackAndBurn(
+            address(usdcToken), path, buybackAmount, expectedHtk, type(uint256).max, deadline
+        );
 
         // Check HTK was burned (sent to dead address)
         assertEq(htkToken.balanceOf(address(0xdead)), expectedHtk);
@@ -375,7 +377,9 @@ contract TreasuryTest is Test {
         uint256 deadline = block.timestamp + 3600;
 
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
-        mockRelay.executeBuybackAndBurn(address(usdcToken), path, buybackAmount, expectedHtk, type(uint256).max, deadline);
+        mockRelay.executeBuybackAndBurn(
+            address(usdcToken), path, buybackAmount, expectedHtk, type(uint256).max, deadline
+        );
 
         // 3. Verify final state
         uint256 remainingUsdc = 12_000e6; // 10000 + 5000 - 3000
