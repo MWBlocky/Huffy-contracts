@@ -42,14 +42,6 @@ contract Treasury is AccessControl, ReentrancyGuard {
         address indexed initiator,
         uint256 timestamp
     );
-    event SwapForExactExecuted(
-        address indexed tokenIn,
-        address indexed tokenOut,
-        uint256 amountInUsed,
-        uint256 amountOut,
-        address indexed initiator,
-        uint256 timestamp
-    );
     event Burned(uint256 amount, address indexed initiator, uint256 timestamp);
     event RelayUpdated(address indexed oldRelay, address indexed newRelay, uint256 timestamp);
     event AdapterUpdated(address indexed oldAdapter, address indexed newAdapter, uint256 timestamp);
@@ -254,46 +246,6 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
         emit SwapExecuted(tokenIn, tokenOut, amountInUsed, amountReceived, msg.sender, block.timestamp);
         return amountReceived;
-    }
-
-    // Exact out → spend up to max in (zwraca rzeczywiste amountInUsed)
-    function executeSwapForExact(
-        address tokenIn,
-        address tokenOut,
-        bytes calldata pathReversed, // ścieżka odwrotna (dla exactOutput)
-        uint256 amountOut,
-        uint256 amountInMaximum,
-        uint256 deadline
-    ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 amountInUsed) {
-        require(tokenIn != address(0) && tokenOut != address(0), "Treasury: Invalid token");
-        require(tokenIn != tokenOut, "Treasury: Same token");
-        require(amountOut > 0 && amountInMaximum > 0, "Treasury: Zero amount");
-        require(deadline >= block.timestamp, "Treasury: Expired deadline");
-        require(pathReversed.length > 0, "Treasury: Invalid path");
-        require(IERC20(tokenIn).balanceOf(address(this)) >= amountInMaximum, "Treasury: Insufficient balance");
-
-        IERC20(tokenIn).forceApprove(address(adapter), 0);
-        IERC20(tokenIn).forceApprove(address(adapter), amountInMaximum);
-
-        ISwapAdapter.SwapRequest memory request = ISwapAdapter.SwapRequest({
-            kind: ISwapAdapter.SwapKind.TokensForExactTokens,
-            tokenIn: tokenIn,
-            path: pathReversed,
-            recipient: address(this),
-            deadline: deadline,
-            amountIn: 0,
-            amountOut: amountOut,
-            amountInMaximum: amountInMaximum,
-            amountOutMinimum: 0
-        });
-
-        (
-            amountInUsed, /*amountOutReceived*/
-        ) = adapter.swap(request);
-        // Adapter zwróci nadwyżkę tokenIn → balans Treasury się zgadza
-
-        emit SwapForExactExecuted(tokenIn, tokenOut, amountInUsed, amountOut, msg.sender, block.timestamp);
-        return amountInUsed;
     }
 
     // ------------ Views ------------
