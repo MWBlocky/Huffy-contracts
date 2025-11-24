@@ -69,7 +69,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
     function deposit(address token, uint256 amount) external nonReentrant {
         require(token != address(0), "Treasury: Invalid token");
         require(amount > 0, "Treasury: Zero amount");
-        // why: Treasury musi być associated z tokenem HTS zanim otrzyma transfer
+        // Note: Treasury must be associated with an HTS token before it can receive transfers
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         emit Deposited(token, msg.sender, amount, block.timestamp);
     }
@@ -303,7 +303,7 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
     function _burn(uint256 amount) private returns (uint256) {
         require(amount > 0, "Treasury: Zero burn amount");
-        // Uwaga: dla HTS natywnego burn zwykle wymaga roli. Tu prosty transfer do dead.
+        // Reminder: native HTS burn typically requires a role. Here we send to a dead address instead
         IERC20(HTK_TOKEN).safeTransfer(address(0xdead), amount);
         emit Burned(amount, msg.sender, block.timestamp);
         return amount;

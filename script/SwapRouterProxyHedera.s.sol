@@ -7,8 +7,8 @@ import {SwapRouterProxyHedera} from "../src/SwapRouterProxyHedera.sol";
 
 contract DeploySwapRouterProxyHedera is Script {
     function run() external {
-        address router = address(0x00000000000000000000000000000000003c437A);
-        address whbar = address(0x0000000000000000000000000000000000163B5a);
+        address router = vm.envAddress("SWAP_ROUTER_ADDRESS");
+        address whbar = vm.envAddress("WHBAR_ADDRESS");
 
         vm.startBroadcast();
 
