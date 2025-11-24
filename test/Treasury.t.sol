@@ -272,7 +272,6 @@ contract TreasuryTest is Test {
         uint256 buybackAmount = 1000e6;
         uint256 deadline = block.timestamp + 3600;
 
-        vm.expectRevert(bytes("Treasury: Cannot swap HTK for HTK"));
         bytes memory path = _encodePath(address(htkToken), address(htkToken));
         vm.expectRevert(bytes("Treasury: Cannot swap HTK for HTK"));
         mockRelay.executeBuybackAndBurn(address(htkToken), path, buybackAmount, 0, deadline);
@@ -501,8 +500,9 @@ contract TreasuryTest is Test {
         );
     }
 
-    function test_RevertWhen_SwapInsufficientBalance() public {
+ function test_RevertWhen_SwapInsufficientBalance() public {
         uint256 amountIn = 20_000e6;
+        uint256 minOut = 1;
         uint256 deadline = block.timestamp + 3600;
         vm.expectRevert(bytes("Treasury: Insufficient balance"));
         bytes memory path = _encodePath(address(usdcToken), address(htkToken));
@@ -513,7 +513,7 @@ contract TreasuryTest is Test {
             path,
             amountIn,
             0,
-            0,
+            minOut,
             deadline
         );
     }

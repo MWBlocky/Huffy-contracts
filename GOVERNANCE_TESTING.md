@@ -22,7 +22,7 @@ We will:
   - `HuffyTimelock`
   - `HuffyGovernor` (wired to the Timelock and HTK)
   - `ParameterStore` (owned by Timelock)
-  - `PairWhitelist` (managed directly by DAO admin)
+  - `PairWhitelist` (owned by Timelock)
   - `HTK` Votes token address (ERC20Votes-compatible) with voting power delegated
 
 If you need to deploy the stack, see `script/Governor.s.sol` for a reference deployment flow.

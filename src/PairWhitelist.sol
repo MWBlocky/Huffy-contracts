@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 /**
  * @title PairWhitelist
  * @notice Registry of governance-approved trading pairs
- * @dev Managed directly by the DAO admin without a timelock
+ * @dev Timelock-controlled: only the Timelock can add/remove pairs
  */
 contract PairWhitelist {
-    address public immutable ADMIN;
+    address public immutable TIMELOCK;
 
     // Mapping: tokenIn => tokenOut => isWhitelisted
     mapping(address => mapping(address => bool)) private _whitelist;
@@ -24,18 +24,18 @@ contract PairWhitelist {
     event PairAdded(address indexed tokenIn, address indexed tokenOut);
     event PairRemoved(address indexed tokenIn, address indexed tokenOut);
 
-    constructor(address _admin) {
-        require(_admin != address(0), "PairWhitelist: invalid admin");
-        ADMIN = _admin;
+    constructor(address _timelock) {
+        require(_timelock != address(0), "PairWhitelist: invalid timelock");
+        TIMELOCK = _timelock;
     }
 
-    modifier onlyAdmin() {
-        _onlyAdmin();
+    modifier onlyTimelock() {
+        _onlyTimelock();
         _;
     }
 
-    function _onlyAdmin() internal view {
-        require(msg.sender == ADMIN, "PairWhitelist: only admin");
+    function _onlyTimelock() internal view {
+        require(msg.sender == TIMELOCK, "PairWhitelist: only Timelock");
     }
 
     /**
@@ -43,7 +43,7 @@ contract PairWhitelist {
      * @param tokenIn Address of the input token
      * @param tokenOut Address of the output token
      */
-    function addPair(address tokenIn, address tokenOut) external onlyAdmin {
+    function addPair(address tokenIn, address tokenOut) external onlyTimelock {
         require(tokenIn != address(0) && tokenOut != address(0), "PairWhitelist: invalid token");
         require(tokenIn != tokenOut, "PairWhitelist: same token");
 
@@ -64,7 +64,7 @@ contract PairWhitelist {
      * @param tokenIn Address of the input token
      * @param tokenOut Address of the output token
      */
-    function removePair(address tokenIn, address tokenOut) external onlyAdmin {
+    function removePair(address tokenIn, address tokenOut) external onlyTimelock {
         (address token0, address token1) = tokenIn < tokenOut ? (tokenIn, tokenOut) : (tokenOut, tokenIn);
 
         require(_whitelist[token0][token1], "PairWhitelist: not present");
