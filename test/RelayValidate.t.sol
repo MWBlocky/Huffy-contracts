@@ -41,9 +41,14 @@ contract MockRouter {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
-        address /*to*/,
+        address,
+        /*to*/
         uint256 /*deadline*/
-    ) external pure returns (uint256[] memory) {
+    )
+        external
+        pure
+        returns (uint256[] memory)
+    {
         // not used in these tests. Return pass-through values
         uint256[] memory amounts = new uint256[](path.length);
         amounts[0] = amountIn;
