@@ -146,6 +146,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         uint256 amountIn,
         uint256 amountOut,
         uint256 amountOutMin,
+        uint256 expectedAmountOut,
         uint256 deadline
     )
         external
@@ -157,7 +158,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOutMin, block.timestamp);
         require(path.length > 0, "Relay: Invalid path");
 
-        ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, amountOutMin, path);
+        ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, amountOutMin, expectedAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
                 msg.sender,
@@ -220,6 +221,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         bytes calldata path,
         uint256 amountIn,
         uint256 minAmountOut,
+        uint256 expectedAmountOut,
         uint256 deadline
     ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
         address htkToken = TREASURY.HTK_TOKEN();
@@ -227,7 +229,7 @@ contract Relay is AccessControl, ReentrancyGuard {
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
         );
         require(path.length > 0, "Relay: Invalid path");
-        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut, path);
+        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut, expectedAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
                 msg.sender,
@@ -268,7 +270,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         address tokenOut,
         uint256 amountIn,
         uint256 minAmountOut,
-        bytes calldata path
+        uint256 expectedAmountOut
     ) internal view returns (ValidationResult memory vr) {
         vr.maxTradeBps = PARAM_STORE.maxTradeBps();
         vr.maxSlippageBps = PARAM_STORE.maxSlippageBps();
@@ -282,7 +284,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         bool pairWhitelisted = PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut);
         vr.treasuryBalance = TREASURY.getBalance(tokenIn);
         vr.maxAllowedAmount = (vr.treasuryBalance * vr.maxTradeBps) / 10000;
-        vr.impliedSlippage = _calculateImpliedSlippage(path, amountIn, minAmountOut);
+        vr.impliedSlippage = _calculateImpliedSlippage(minAmountOut, expectedAmountOut);
         ITradeValidator.TradeContext memory ctx = ITradeValidator.TradeContext({
             maxTradeBps: vr.maxTradeBps,
             maxSlippageBps: vr.maxSlippageBps,
@@ -312,9 +314,23 @@ contract Relay is AccessControl, ReentrancyGuard {
         return vr;
     }
 
-    /// @notice Slippage check disabled on-chain (legacy V1 quoting removed); rely on off-chain minAmountOut
-    function _calculateImpliedSlippage(bytes calldata, uint256, uint256) private pure returns (uint256) {
-        return 0;
+    /**
+     * @notice Calculate implied slippage
+     * @dev Compares expected output with minAmountOut
+     * @param minAmountOut Minimum acceptable output amount (with slippage tolerance)
+     * @param expectedAmountOut Expected output amount
+     */
+    function _calculateImpliedSlippage(uint256 minAmountOut, uint256 expectedAmountOut)
+        internal
+        pure
+        returns (uint256 slippageBps)
+    {
+        if (expectedAmountOut == 0 || minAmountOut >= expectedAmountOut) {
+            return 0;
+        }
+        uint256 slippageAmount = expectedAmountOut - minAmountOut;
+        slippageBps = (slippageAmount * 10_000) / expectedAmountOut;
+        return slippageBps;
     }
 
     /**

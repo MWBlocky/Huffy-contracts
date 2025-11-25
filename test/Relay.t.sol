@@ -113,7 +113,15 @@ contract RelayTest is Test {
         uint256 deadline
     ) internal returns (uint256, bytes32[] memory) {
         return relay.proposeSwap(
-            ISwapAdapter.SwapKind.ExactTokensForTokens, tokenIn, tokenOut, path, amountIn, 0, minAmountOut, deadline
+            ISwapAdapter.SwapKind.ExactTokensForTokens,
+            tokenIn,
+            tokenOut,
+            path,
+            amountIn,
+            0,
+            minAmountOut,
+            minAmountOut,
+            deadline
         );
     }
 
@@ -535,6 +543,7 @@ contract RelayTest is Test {
             _encodePath(address(usdcToken), address(htkToken)),
             amountIn,
             minAmountOut,
+            minAmountOut,
             block.timestamp + 1000
         );
 
@@ -548,6 +557,7 @@ contract RelayTest is Test {
             address(usdcToken),
             _encodePath(address(usdcToken), address(htkToken)),
             1000e6,
+            1900e6,
             1900e6,
             block.timestamp + 1000
         );

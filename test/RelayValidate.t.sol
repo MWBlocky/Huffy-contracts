@@ -110,11 +110,15 @@ contract TestRelay is Relay {
     function exposeValidate(
         address tokenIn,
         address tokenOut,
-        bytes calldata path,
         uint256 amountIn,
-        uint256 minAmountOut
-    ) external view returns (ValidationResult memory) {
-        return _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut, path);
+        uint256 minAmountOut,
+        uint256 expectedAmountOut
+    )
+        external
+        view
+        returns (ValidationResult memory)
+    {
+        return _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut, expectedAmountOut);
     }
 
     function validatorsLength() external view returns (uint256) {
@@ -165,14 +169,14 @@ contract RelayValidateTest is Test {
         uint256 amountIn = 10_000; // treasury balance 1,000,000 -> maxAllowed = 100,000
         uint256 expectedOut = amountIn * router.rate();
         uint256 minOut = expectedOut - (expectedOut * 50 / 10_000); // 50 bps slippage
-        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, path, amountIn, minOut);
+        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, amountIn, minOut, expectedOut);
         assertTrue(vr.isValid, "should be valid");
         assertEq(vr.reasonCodes.length, 0, "no reasons");
     }
 
     function test_pair_not_whitelisted() public {
         pw.setPair(tokenIn, tokenOut, false);
-        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, path, 100, 1);
+        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, 100, 1, 1);
         assertFalse(vr.isValid);
         // first code equals PAIR_NOT_WHITELISTED
         assertEq(vr.reasonCodes[0], keccak256("PAIR_NOT_WHITELISTED"));
@@ -181,7 +185,7 @@ contract RelayValidateTest is Test {
     function test_exceeds_max_trade_size() public {
         params.set(1000, 100, 0); // 10%
         treasury.setBalance(tokenIn, 1_000); // maxAllowed = 100
-        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, path, 200, 1);
+        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, 200, 1, 200);
         assertFalse(vr.isValid);
         assertContains(vr.reasonCodes, keccak256("EXCEEDS_MAX_TRADE_SIZE"));
     }
@@ -199,13 +203,13 @@ contract RelayValidateTest is Test {
 
     function test_insufficient_treasury_balance() public {
         treasury.setBalance(tokenIn, 50);
-        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, path, 100, 1);
+        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, 100, 1, 100);
         assertFalse(vr.isValid);
         assertContains(vr.reasonCodes, keccak256("INSUFFICIENT_TREASURY_BALANCE"));
     }
 
     function test_invalid_parameters() public {
-        Relay.ValidationResult memory vr = relay.exposeValidate(address(0), tokenOut, path, 100, 0);
+        Relay.ValidationResult memory vr = relay.exposeValidate(address(0), tokenOut, 100, 0, 100);
         assertFalse(vr.isValid);
         assertContains(vr.reasonCodes, keccak256("INVALID_PARAMETERS"));
     }
