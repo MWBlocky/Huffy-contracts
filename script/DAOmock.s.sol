@@ -13,14 +13,14 @@ contract MockDAOScript is Script {
         MockDAO mockDao = new MockDAO();
         console.log("Mock DAO:", address(mockDao));
 
-        address treasuryAddress = vm.envAddress("TREASURY_ADDRESS");
+        address payable treasuryAddress = payable(vm.envAddress("TREASURY_ADDRESS"));
         Treasury treasury = Treasury(treasuryAddress);
 
         treasury.grantRole(treasury.DEFAULT_ADMIN_ROLE(), address(mockDao));
 
         address relay = vm.envOr("RELAY_ADDRESS", msg.sender);
 
-        mockDao.setTreasury(address(treasury));
+        mockDao.setTreasury(treasuryAddress);
         mockDao.updateRelay(msg.sender, relay);
 
         vm.stopBroadcast();

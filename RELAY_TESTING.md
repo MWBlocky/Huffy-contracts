@@ -142,9 +142,10 @@ Only authorized traders can submit trades:
 
 ```bash
 # From trader account (HuffyPuppet)
-cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" \
+cast send $RELAY_ADDRESS "proposeSwap(address,address,bytes,uint256,uint256,uint256)" \
   $USDC_TOKEN_ADDRESS \
   $USDT_TOKEN_ADDRESS \
+  $USDC_TO_USDT_PATH \
   100000000 \
   95000000 \
   $DEADLINE \
@@ -155,6 +156,7 @@ cast send $RELAY_ADDRESS "proposeSwap(address,address,uint256,uint256,uint256)" 
 Parameters:
 - tokenIn: Input token address
 - tokenOut: Output token address
+- path: Adapter-specific encoded bytes path describing the swap route
 - amountIn: Amount to swap (e.g., 100 USDC = 100000000 with 6 decimals)
 - minAmountOut: Minimum expected output (accounting for slippage)
 - deadline: UNIX timestamp
@@ -163,8 +165,9 @@ Parameters:
 
 ```bash
 # From trader account
-cast send $RELAY_ADDRESS "proposeBuybackAndBurn(address,uint256,uint256,uint256)" \
+cast send $RELAY_ADDRESS "proposeBuybackAndBurn(address,bytes,uint256,uint256,uint256)" \
   $USDC_TOKEN_ADDRESS \
+  $USDC_TO_HTK_PATH \
   100000000 \
   190000000000000000000 \
   $DEADLINE \
@@ -174,6 +177,7 @@ cast send $RELAY_ADDRESS "proposeBuybackAndBurn(address,uint256,uint256,uint256)
 
 Parameters:
 - tokenIn: Input token address (e.g., USDC)
+- path: Adapter-specific bytes path for the trade
 - amountIn: Amount to swap (e.g., 100 USDC)
 - minAmountOut: Minimum HTK expected (e.g., 190 HTK with 18 decimals)
 - deadline: UNIX timestamp

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {ISwapAdapter} from "../interfaces/ISwapAdapter.sol";
 import {Treasury} from "../Treasury.sol";
 
 /**
@@ -10,22 +11,31 @@ import {Treasury} from "../Treasury.sol";
 contract MockRelay {
     Treasury public treasury;
 
-    constructor(address _treasury) {
+    constructor(address payable _treasury) {
         require(_treasury != address(0), "MockRelay: Invalid treasury");
         treasury = Treasury(_treasury);
     }
 
-    function executeBuybackAndBurn(address tokenIn, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
-        external
-        returns (uint256)
-    {
-        return treasury.executeBuybackAndBurn(tokenIn, amountIn, amountOutMin, deadline);
+    function executeBuybackAndBurn(
+        address tokenIn,
+        bytes calldata path,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        uint256 deadline
+    ) external returns (uint256) {
+        return treasury.executeBuybackAndBurn(tokenIn, path, amountIn, amountOutMin, deadline);
     }
 
-    function executeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOutMin, uint256 deadline)
-        external
-        returns (uint256)
-    {
-        return treasury.executeSwap(tokenIn, tokenOut, amountIn, amountOutMin, deadline);
+    function executeSwap(
+        ISwapAdapter.SwapKind kind,
+        address tokenIn,
+        address tokenOut,
+        bytes calldata path,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 amountOutMin,
+        uint256 deadline
+    ) external returns (uint256) {
+        return treasury.executeSwap(kind, tokenIn, tokenOut, path, amountIn, amountOut, amountOutMin, deadline);
     }
 }

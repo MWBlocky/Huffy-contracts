@@ -6,6 +6,7 @@ import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/Ree
 import {PairWhitelist} from "./PairWhitelist.sol";
 import {Treasury} from "./Treasury.sol";
 import {ISaucerswapRouter} from "./interfaces/ISaucerswapRouter.sol";
+import {ISwapAdapter} from "./interfaces/ISwapAdapter.sol";
 import {ParameterStore} from "./ParameterStore.sol";
 import {ITradeValidator} from "./interfaces/ITradeValidator.sol";
 
@@ -22,6 +23,7 @@ contract Relay is AccessControl, ReentrancyGuard {
     Treasury public immutable TREASURY;
     ISaucerswapRouter public immutable SAUCERSWAP_ROUTER;
     ParameterStore public immutable PARAM_STORE;
+    address public whbarToken;
 
     // State tracking
     uint256 public lastTradeTimestamp;
@@ -94,13 +96,15 @@ contract Relay is AccessControl, ReentrancyGuard {
 
     event TraderAuthorized(address indexed trader, uint256 timestamp);
     event TraderRevoked(address indexed trader, uint256 timestamp);
+    event WhbarTokenUpdated(address indexed oldWhbar, address indexed newWhbar, uint256 timestamp);
 
     constructor(
         address _pairWhitelist,
-        address _treasury,
+        address payable _treasury,
         address _saucerswapRouter,
         address _parameterStore,
         address _admin,
+        address _whbarToken,
         address[] memory _initialTraders
     ) {
         require(_pairWhitelist != address(0), "Relay: Invalid whitelist");
@@ -108,12 +112,14 @@ contract Relay is AccessControl, ReentrancyGuard {
         require(_saucerswapRouter != address(0), "Relay: Invalid router");
         require(_parameterStore != address(0), "Relay: Invalid parameter store");
         require(_admin != address(0), "Relay: Invalid admin");
+        require(_whbarToken != address(0), "Relay: Invalid WHBAR token");
         require(_initialTraders.length > 0, "Relay: No initial traders");
 
         PAIR_WHITELIST = PairWhitelist(_pairWhitelist);
         TREASURY = Treasury(_treasury);
         SAUCERSWAP_ROUTER = ISaucerswapRouter(_saucerswapRouter);
         PARAM_STORE = ParameterStore(_parameterStore);
+        whbarToken = _whbarToken;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(DAO_ROLE, _admin);
@@ -126,29 +132,45 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Submit a generic swap trade proposal
-     * @param tokenIn Address of input token
+     * @notice Submit a generic swap trade proposal (supports all swap kinds from Treasury)
+     * @param kind Swap kind (see ISwapAdapter.SwapKind)
+     * @param tokenIn Address of input token (address(0) for HBAR kinds)
      * @param tokenOut Address of output token
-     * @param amountIn Amount of tokenIn to swap
-     * @param minAmountOut Minimum amount of tokenOut expected
+     * @param path Encoded swap path for the adapter
+     * @param amountIn Amount of tokenIn (exact-in) or max-in (exact-out)
+     * @param amountOut Amount expected (exact-out flows)
+     * @param amountOutMin Minimum output (exact-in flows)
      * @param deadline Swap deadline timestamp
-     * @return amountOut Actual amount received
+     * @return amountOutReceived Actual amount received
      */
-    function proposeSwap(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, uint256 deadline)
+    function proposeSwap(
+        ISwapAdapter.SwapKind kind,
+        address tokenIn,
+        address tokenOut,
+        bytes calldata path,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 amountOutMin,
+        uint256 expectedAmountOut,
+        uint256 deadline
+    )
         external
+        payable
         onlyRole(TRADER_ROLE)
         nonReentrant
-        returns (uint256 amountOut, bytes32[] memory reasonCodes)
+        returns (uint256 amountOutReceived, bytes32[] memory reasonCodes)
     {
-        emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, minAmountOut, block.timestamp);
-        ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut);
+        emit TradeProposed(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOutMin, block.timestamp);
+        require(path.length > 0, "Relay: Invalid path");
+
+        ValidationResult memory vr = _validateTrade(tokenIn, tokenOut, amountIn, amountOutMin, expectedAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
                 msg.sender,
                 tokenIn,
                 tokenOut,
                 amountIn,
-                minAmountOut,
+                amountOutMin,
                 vr.maxTradeBps,
                 vr.maxSlippageBps,
                 vr.cooldownRemaining,
@@ -157,43 +179,60 @@ contract Relay is AccessControl, ReentrancyGuard {
             );
             return (0, vr.reasonCodes);
         }
+
+        // Basic checks for HBAR flows (Treasury funds; msg.value must be zero)
+        if (kind == ISwapAdapter.SwapKind.ExactHBARForTokens || kind == ISwapAdapter.SwapKind.HBARForExactTokens) {
+            require(tokenIn == address(0) || tokenIn == whbarToken, "Relay: tokenIn must be HBAR/WHBAR");
+            require(msg.value == 0, "Relay: msg.value must be zero");
+            tokenIn = address(0);
+        } else {
+            require(msg.value == 0, "Relay: Unexpected value");
+        }
+
         emit TradeApproved(
             msg.sender,
             TradeType.SWAP,
             tokenIn,
             tokenOut,
             amountIn,
-            minAmountOut,
-            TREASURY.getBalance(tokenIn),
+            amountOutMin,
+            tokenIn == address(0) ? address(TREASURY).balance : TREASURY.getBalance(tokenIn),
             vr.maxTradeBps,
             vr.maxSlippageBps,
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
-        amountOut = TREASURY.executeSwap(tokenIn, tokenOut, amountIn, minAmountOut, deadline);
-        emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
-        return (amountOut, new bytes32[](0));
+
+        amountOutReceived =
+            TREASURY.executeSwap(kind, tokenIn, tokenOut, path, amountIn, amountOut, amountOutMin, deadline);
+
+        emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOutReceived, block.timestamp);
+        return (amountOutReceived, new bytes32[](0));
     }
 
     /**
      * @notice Submit a buyback-and-burn trade proposal
      * @param tokenIn Address of input token
+     * @param path Encoded swap path for the adapter
      * @param amountIn Amount of tokenIn to swap for HTK
      * @param minAmountOut Minimum HTK to receive
      * @param deadline Swap deadline timestamp
      * @return burnedAmount Amount of HTK burned
      */
-    function proposeBuybackAndBurn(address tokenIn, uint256 amountIn, uint256 minAmountOut, uint256 deadline)
-        external
-        onlyRole(TRADER_ROLE)
-        nonReentrant
-        returns (uint256 burnedAmount, bytes32[] memory reasonCodes)
-    {
+    function proposeBuybackAndBurn(
+        address tokenIn,
+        bytes calldata path,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        uint256 expectedAmountOut,
+        uint256 deadline
+    ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
         address htkToken = TREASURY.HTK_TOKEN();
         emit TradeProposed(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
         );
-        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut);
+        require(path.length > 0, "Relay: Invalid path");
+        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut, expectedAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
                 msg.sender,
@@ -222,18 +261,20 @@ contract Relay is AccessControl, ReentrancyGuard {
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
-        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, amountIn, minAmountOut, deadline);
+        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, path, amountIn, minAmountOut, deadline);
         emit TradeForwarded(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, burnedAmount, block.timestamp
         );
         return (burnedAmount, new bytes32[](0));
     }
 
-    function _validateTrade(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
-        internal
-        view
-        returns (ValidationResult memory vr)
-    {
+    function _validateTrade(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        uint256 expectedAmountOut
+    ) internal view returns (ValidationResult memory vr) {
         vr.maxTradeBps = PARAM_STORE.maxTradeBps();
         vr.maxSlippageBps = PARAM_STORE.maxSlippageBps();
         vr.tradeCooldownSec = PARAM_STORE.tradeCooldownSec();
@@ -244,9 +285,13 @@ contract Relay is AccessControl, ReentrancyGuard {
             }
         }
         bool pairWhitelisted = PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut);
-        vr.treasuryBalance = TREASURY.getBalance(tokenIn);
+        if (tokenIn == whbarToken) {
+            vr.treasuryBalance = address(TREASURY).balance;
+        } else {
+            vr.treasuryBalance = TREASURY.getBalance(tokenIn);
+        }
         vr.maxAllowedAmount = (vr.treasuryBalance * vr.maxTradeBps) / 10000;
-        vr.impliedSlippage = _calculateImpliedSlippage(tokenIn, tokenOut, amountIn, minAmountOut);
+        vr.impliedSlippage = _calculateImpliedSlippage(minAmountOut, expectedAmountOut);
         ITradeValidator.TradeContext memory ctx = ITradeValidator.TradeContext({
             maxTradeBps: vr.maxTradeBps,
             maxSlippageBps: vr.maxSlippageBps,
@@ -277,29 +322,21 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     /**
-     * @notice Calculate implied slippage by querying Saucerswap router
-     * @dev Queries router for expected output and compares with minAmountOut
-     * @param tokenIn Input token address
-     * @param tokenOut Output token address
-     * @param amountIn Amount of input token
+     * @notice Calculate implied slippage
+     * @dev Compares expected output with minAmountOut
      * @param minAmountOut Minimum acceptable output amount (with slippage tolerance)
-     * @return slippageBps Slippage in basis points
+     * @param expectedAmountOut Expected output amount
      */
-    function _calculateImpliedSlippage(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut)
-        private
-        view
+    function _calculateImpliedSlippage(uint256 minAmountOut, uint256 expectedAmountOut)
+        internal
+        pure
         returns (uint256 slippageBps)
     {
-        address[] memory path = new address[](2);
-        path[0] = tokenIn;
-        path[1] = tokenOut;
-        uint256[] memory amounts = SAUCERSWAP_ROUTER.getAmountsOut(amountIn, path);
-        uint256 expectedAmountOut = amounts[1];
-        if (minAmountOut >= expectedAmountOut) {
+        if (expectedAmountOut == 0 || minAmountOut >= expectedAmountOut) {
             return 0;
         }
         uint256 slippageAmount = expectedAmountOut - minAmountOut;
-        slippageBps = (slippageAmount * 10000) / expectedAmountOut;
+        slippageBps = (slippageAmount * 10_000) / expectedAmountOut;
         return slippageBps;
     }
 
@@ -320,6 +357,14 @@ contract Relay is AccessControl, ReentrancyGuard {
     function revokeTrader(address trader) external onlyRole(DAO_ROLE) {
         _revokeRole(TRADER_ROLE, trader);
         emit TraderRevoked(trader, block.timestamp);
+    }
+
+    function setWhbarToken(address _whbarToken) external onlyRole(DAO_ROLE) {
+        require(_whbarToken != address(0), "Relay: Invalid WHBAR token");
+        address old = whbarToken;
+        require(_whbarToken != old, "Relay: Same WHBAR token");
+        whbarToken = _whbarToken;
+        emit WhbarTokenUpdated(old, _whbarToken, block.timestamp);
     }
 
     /**

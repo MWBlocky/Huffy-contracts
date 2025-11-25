@@ -135,7 +135,29 @@ forge script script/SaucerswapMock.s.sol:SaucerswapMock \
 ```
 source .env
 ```
-`HTK_TOKEN_ADDRESS, SAUCERSWAP_ROUTER, DAO_ADMIN_ADDRESS, RELAY_ADDRESS`
+`SAUCERSWAP_ROUTER, WHBAR_TOKEN_ADDRESS`
+```bash
+forge script script/SwapRouterProxyHedera.s.sol:DeploySwapRouterProxyHedera \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+---
+```
+source .env
+```
+`SWAP_ROUTER_PROXY_ADDRESS`
+```bash
+forge script script/SaucerswapAdapter.s.sol:DeploySaucerswapAdapter \
+  --rpc-url $HEDERA_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+---
+```
+source .env
+```
+`SWAP_ADAPTER_ADDRESS`
 ```bash
 forge script script/Treasury.s.sol:DeployTreasury \
   --rpc-url $HEDERA_RPC_URL \
