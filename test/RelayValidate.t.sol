@@ -113,11 +113,7 @@ contract TestRelay is Relay {
         uint256 amountIn,
         uint256 minAmountOut,
         uint256 expectedAmountOut
-    )
-        external
-        view
-        returns (ValidationResult memory)
-    {
+    ) external view returns (ValidationResult memory) {
         return _validateTrade(tokenIn, tokenOut, amountIn, minAmountOut, expectedAmountOut);
     }
 
