@@ -19,7 +19,7 @@ We will:
 - Foundry installed (`forge`, `cast`)
 - Hedera Testnet RPC (Hashio or another provider)
 - Deployed contracts:
-  - `HuffyTimelock`
+  - `Timelock` handled by external contract
   - `HuffyGovernor` (wired to the Timelock and HTK)
   - `ParameterStore` (owned by Timelock)
   - `PairWhitelist` (owned by Timelock)
