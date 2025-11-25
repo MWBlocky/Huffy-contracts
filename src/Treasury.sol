@@ -131,12 +131,14 @@ contract Treasury is AccessControl, ReentrancyGuard {
             require(msg.value == 0, "Treasury: Unexpected value");
         }
 
-        // HBAR-in flows (value forwarded)
+        // HBAR-in flows (financed from Treasury balance; msg.value must be 0)
         if (kind == ISwapAdapter.SwapKind.ExactHBARForTokens) {
             require(tokenOut != address(0), "Treasury: Invalid tokenOut");
-            require(amountIn > 0, "Treasury: Zero amount");
+            require(msg.value == 0, "Treasury: Unexpected value");
+            uint256 amountInEffective = amountIn;
+            require(amountInEffective > 0, "Treasury: Zero amount");
+            require(address(this).balance >= amountInEffective, "Treasury: Insufficient balance");
             require(amountOutMin > 0, "Treasury: Zero minOut");
-            require(msg.value == amountIn, "Treasury: msg.value mismatch");
 
             ISwapAdapter.SwapRequest memory hbarExactInRequest = ISwapAdapter.SwapRequest({
                 kind: kind,
@@ -144,24 +146,26 @@ contract Treasury is AccessControl, ReentrancyGuard {
                 path: path,
                 recipient: address(this),
                 deadline: deadline,
-                amountIn: amountIn,
+                amountIn: amountInEffective,
                 amountOut: 0,
-                amountInMaximum: amountIn,
+                amountInMaximum: amountInEffective,
                 amountOutMinimum: amountOutMin
             });
 
-            (, amountReceived) = adapter.swap{value: msg.value}(hbarExactInRequest);
+            (, amountReceived) = adapter.swap{value: amountInEffective}(hbarExactInRequest);
             require(amountReceived >= amountOutMin, "Treasury: Insufficient output");
 
-            emit SwapExecuted(address(0), tokenOut, amountIn, amountReceived, msg.sender, block.timestamp);
+            emit SwapExecuted(address(0), tokenOut, amountInEffective, amountReceived, msg.sender, block.timestamp);
             return amountReceived;
         }
 
         if (kind == ISwapAdapter.SwapKind.HBARForExactTokens) {
             require(tokenOut != address(0), "Treasury: Invalid tokenOut");
             require(amountOut > 0, "Treasury: Zero amountOut");
-            require(amountIn > 0, "Treasury: Zero maxIn");
-            require(msg.value == amountIn, "Treasury: msg.value mismatch");
+            require(msg.value == 0, "Treasury: Unexpected value");
+            uint256 amountInMaxEffective = amountIn;
+            require(amountInMaxEffective > 0, "Treasury: Zero maxIn");
+            require(address(this).balance >= amountInMaxEffective, "Treasury: Insufficient balance");
 
             ISwapAdapter.SwapRequest memory hbarExactOutRequest = ISwapAdapter.SwapRequest({
                 kind: kind,
@@ -171,14 +175,14 @@ contract Treasury is AccessControl, ReentrancyGuard {
                 deadline: deadline,
                 amountIn: 0,
                 amountOut: amountOut,
-                amountInMaximum: amountIn,
+                amountInMaximum: amountInMaxEffective,
                 amountOutMinimum: 0
             });
 
             (uint256 amountInUsedHBAR, uint256 amountOutReceivedHBAR) =
-                adapter.swap{value: msg.value}(hbarExactOutRequest);
+                adapter.swap{value: amountInMaxEffective}(hbarExactOutRequest);
             require(amountOutReceivedHBAR >= amountOut, "Treasury: Insufficient output");
-            require(amountInUsedHBAR <= amountIn, "Treasury: overspent");
+            require(amountInUsedHBAR <= amountInMaxEffective, "Treasury: overspent");
             amountReceived = amountOutReceivedHBAR;
 
             emit SwapExecuted(address(0), tokenOut, amountInUsedHBAR, amountReceived, msg.sender, block.timestamp);

@@ -23,6 +23,7 @@ contract Relay is AccessControl, ReentrancyGuard {
     Treasury public immutable TREASURY;
     ISaucerswapRouter public immutable SAUCERSWAP_ROUTER;
     ParameterStore public immutable PARAM_STORE;
+    address public whbarToken;
 
     // State tracking
     uint256 public lastTradeTimestamp;
@@ -95,6 +96,7 @@ contract Relay is AccessControl, ReentrancyGuard {
 
     event TraderAuthorized(address indexed trader, uint256 timestamp);
     event TraderRevoked(address indexed trader, uint256 timestamp);
+    event WhbarTokenUpdated(address indexed oldWhbar, address indexed newWhbar, uint256 timestamp);
 
     constructor(
         address _pairWhitelist,
@@ -102,6 +104,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         address _saucerswapRouter,
         address _parameterStore,
         address _admin,
+        address _whbarToken,
         address[] memory _initialTraders
     ) {
         require(_pairWhitelist != address(0), "Relay: Invalid whitelist");
@@ -109,12 +112,14 @@ contract Relay is AccessControl, ReentrancyGuard {
         require(_saucerswapRouter != address(0), "Relay: Invalid router");
         require(_parameterStore != address(0), "Relay: Invalid parameter store");
         require(_admin != address(0), "Relay: Invalid admin");
+        require(_whbarToken != address(0), "Relay: Invalid WHBAR token");
         require(_initialTraders.length > 0, "Relay: No initial traders");
 
         PAIR_WHITELIST = PairWhitelist(_pairWhitelist);
         TREASURY = Treasury(_treasury);
         SAUCERSWAP_ROUTER = ISaucerswapRouter(_saucerswapRouter);
         PARAM_STORE = ParameterStore(_parameterStore);
+        whbarToken = _whbarToken;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(DAO_ROLE, _admin);
@@ -175,12 +180,11 @@ contract Relay is AccessControl, ReentrancyGuard {
             return (0, vr.reasonCodes);
         }
 
-        // Basic checks for HBAR flows
-        uint256 valueToSend = 0;
+        // Basic checks for HBAR flows (Treasury funds; msg.value must be zero)
         if (kind == ISwapAdapter.SwapKind.ExactHBARForTokens || kind == ISwapAdapter.SwapKind.HBARForExactTokens) {
-            require(tokenIn == address(0), "Relay: tokenIn must be 0 for HBAR");
-            require(msg.value > 0, "Relay: msg.value required for HBAR");
-            valueToSend = msg.value;
+            require(tokenIn == address(0) || tokenIn == whbarToken, "Relay: tokenIn must be HBAR/WHBAR");
+            require(msg.value == 0, "Relay: msg.value must be zero");
+            tokenIn = address(0);
         } else {
             require(msg.value == 0, "Relay: Unexpected value");
         }
@@ -192,16 +196,15 @@ contract Relay is AccessControl, ReentrancyGuard {
             tokenOut,
             amountIn,
             amountOutMin,
-            TREASURY.getBalance(tokenIn),
+            tokenIn == address(0) ? address(TREASURY).balance : TREASURY.getBalance(tokenIn),
             vr.maxTradeBps,
             vr.maxSlippageBps,
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
 
-        amountOutReceived = TREASURY.executeSwap{value: valueToSend}(
-            kind, tokenIn, tokenOut, path, amountIn, amountOut, amountOutMin, deadline
-        );
+        amountOutReceived =
+            TREASURY.executeSwap(kind, tokenIn, tokenOut, path, amountIn, amountOut, amountOutMin, deadline);
 
         emit TradeForwarded(msg.sender, TradeType.SWAP, tokenIn, tokenOut, amountIn, amountOutReceived, block.timestamp);
         return (amountOutReceived, new bytes32[](0));
@@ -282,7 +285,11 @@ contract Relay is AccessControl, ReentrancyGuard {
             }
         }
         bool pairWhitelisted = PAIR_WHITELIST.isPairWhitelisted(tokenIn, tokenOut);
-        vr.treasuryBalance = TREASURY.getBalance(tokenIn);
+        if (tokenIn == whbarToken) {
+            vr.treasuryBalance = address(TREASURY).balance;
+        } else {
+            vr.treasuryBalance = TREASURY.getBalance(tokenIn);
+        }
         vr.maxAllowedAmount = (vr.treasuryBalance * vr.maxTradeBps) / 10000;
         vr.impliedSlippage = _calculateImpliedSlippage(minAmountOut, expectedAmountOut);
         ITradeValidator.TradeContext memory ctx = ITradeValidator.TradeContext({
@@ -350,6 +357,14 @@ contract Relay is AccessControl, ReentrancyGuard {
     function revokeTrader(address trader) external onlyRole(DAO_ROLE) {
         _revokeRole(TRADER_ROLE, trader);
         emit TraderRevoked(trader, block.timestamp);
+    }
+
+    function setWhbarToken(address _whbarToken) external onlyRole(DAO_ROLE) {
+        require(_whbarToken != address(0), "Relay: Invalid WHBAR token");
+        address old = whbarToken;
+        require(_whbarToken != old, "Relay: Same WHBAR token");
+        whbarToken = _whbarToken;
+        emit WhbarTokenUpdated(old, _whbarToken, block.timestamp);
     }
 
     /**

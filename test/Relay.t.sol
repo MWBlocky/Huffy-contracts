@@ -25,6 +25,7 @@ contract RelayTest is Test {
     MockERC20 public htkToken;
     MockERC20 public usdcToken;
     MockERC20 public usdtToken;
+    address public whbarToken;
     MockSaucerswapRouter public router;
     MockSwapAdapter public swapAdapter;
     ParameterStore public parameterStore;
@@ -145,6 +146,7 @@ contract RelayTest is Test {
         // Deploy router + adapter
         router = new MockSaucerswapRouter();
         swapAdapter = new MockSwapAdapter(address(router));
+        whbarToken = address(0x1234);
 
         // Deploy PairWhitelist
         pairWhitelist = new PairWhitelist(dao);
@@ -164,6 +166,7 @@ contract RelayTest is Test {
             address(router),
             address(parameterStore),
             dao,
+            whbarToken,
             initialTraders
         );
 

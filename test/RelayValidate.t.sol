@@ -109,8 +109,9 @@ contract TestRelay is Relay {
         address _router,
         address _paramStore,
         address _admin,
+        address _whbarToken,
         address[] memory _initialTraders
-    ) Relay(_pairWhitelist, _treasury, _router, _paramStore, _admin, _initialTraders) {}
+    ) Relay(_pairWhitelist, _treasury, _router, _paramStore, _admin, _whbarToken, _initialTraders) {}
 
     function exposeValidate(
         address tokenIn,
@@ -150,7 +151,10 @@ contract RelayValidateTest is Test {
 
         address[] memory traders = new address[](1);
         traders[0] = trader;
-        relay = new TestRelay(address(pw), payable(address(treasury)), address(router), address(params), admin, traders);
+        address whbar = address(0x3000);
+        relay = new TestRelay(
+            address(pw), payable(address(treasury)), address(router), address(params), admin, whbar, traders
+        );
 
         // Add validators
         relay.addValidator(address(new PairWhitelistValidator()));
