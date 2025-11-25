@@ -41,10 +41,10 @@ contract MockRouter {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory) {
-        // not used in these tests
+        address /*to*/,
+        uint256 /*deadline*/
+    ) external pure returns (uint256[] memory) {
+        // not used in these tests. Return pass-through values
         uint256[] memory amounts = new uint256[](path.length);
         amounts[0] = amountIn;
         amounts[1] = amountOutMin;
@@ -161,7 +161,7 @@ contract RelayValidateTest is Test {
         router.setRate(100); // expectedOut = amountIn * 100
     }
 
-    function test_validate_success() public {
+    function test_validate_success() public view {
         uint256 amountIn = 10_000; // treasury balance 1,000,000 -> maxAllowed = 100,000
         uint256 expectedOut = amountIn * router.rate();
         uint256 minOut = expectedOut - (expectedOut * 50 / 10_000); // 50 bps slippage
@@ -186,16 +186,16 @@ contract RelayValidateTest is Test {
         assertContains(vr.reasonCodes, keccak256("EXCEEDS_MAX_TRADE_SIZE"));
     }
 
-    // function test_exceeds_max_slippage() public {
-    //     params.set(1000, 100, 0); // 1% max
-    //     router.setRate(100); // expectedOut = amountIn * 100
-    //     uint256 amountIn = 100;
-    //     uint256 expectedOut = amountIn * router.rate();
-    //     uint256 minOut = expectedOut - (expectedOut * 200 / 10_000); // 200 bps -> 2%
-    //     Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, path, amountIn, minOut);
-    //     assertFalse(vr.isValid);
-    //     assertContains(vr.reasonCodes, keccak256("EXCEEDS_MAX_SLIPPAGE"));
-    // }
+    function test_exceeds_max_slippage() public {
+        params.set(1000, 100, 0); // 1% max
+        router.setRate(100); // expectedOut = amountIn * 100
+        uint256 amountIn = 100;
+        uint256 expectedOut = amountIn * router.rate();
+        uint256 minOut = expectedOut - (expectedOut * 200 / 10_000); // 200 bps -> 2%
+        Relay.ValidationResult memory vr = relay.exposeValidate(tokenIn, tokenOut, amountIn, minOut, expectedOut);
+        assertFalse(vr.isValid);
+        assertContains(vr.reasonCodes, keccak256("EXCEEDS_MAX_SLIPPAGE"));
+    }
 
     function test_insufficient_treasury_balance() public {
         treasury.setBalance(tokenIn, 50);
@@ -204,7 +204,7 @@ contract RelayValidateTest is Test {
         assertContains(vr.reasonCodes, keccak256("INSUFFICIENT_TREASURY_BALANCE"));
     }
 
-    function test_invalid_parameters() public {
+    function test_invalid_parameters() public view {
         Relay.ValidationResult memory vr = relay.exposeValidate(address(0), tokenOut, 100, 0, 100);
         assertFalse(vr.isValid);
         assertContains(vr.reasonCodes, keccak256("INVALID_PARAMETERS"));
