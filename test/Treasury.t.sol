@@ -500,7 +500,7 @@ contract TreasuryTest is Test {
         );
     }
 
- function test_RevertWhen_SwapInsufficientBalance() public {
+    function test_RevertWhen_SwapInsufficientBalance() public {
         uint256 amountIn = 20_000e6;
         uint256 minOut = 1;
         uint256 deadline = block.timestamp + 3600;

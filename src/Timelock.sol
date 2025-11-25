@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: MIT	
-pragma solidity ^0.8.20;	
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-import {TimelockController} from "../lib/openzeppelin-contracts/contracts/governance/TimelockController.sol";	
+import {TimelockController} from "../lib/openzeppelin-contracts/contracts/governance/TimelockController.sol";
 
-contract HuffyTimelock is TimelockController {	
-    constructor(uint256 minDelay, address[] memory proposers, address[] memory executors, address admin)	
-        TimelockController(minDelay, proposers, executors, admin)	
-    {}	
-}	
+contract HuffyTimelock is TimelockController {
+    constructor(uint256 minDelay, address[] memory proposers, address[] memory executors, address admin)
+        TimelockController(minDelay, proposers, executors, admin)
+    {}
+}
