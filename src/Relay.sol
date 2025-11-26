@@ -213,26 +213,31 @@ contract Relay is AccessControl, ReentrancyGuard {
     /**
      * @notice Submit a buyback-and-burn trade proposal
      * @param tokenIn Address of input token
-     * @param path Encoded swap path for the adapter
+     * @param pathToQuote Path from tokenIn to QUOTE_TOKEN (empty if tokenIn == QUOTE_TOKEN)
      * @param amountIn Amount of tokenIn to swap for HTK
+     * @param minQuoteOut Minimum QUOTE_TOKEN out when swapping tokenIn -> QUOTE_TOKEN
      * @param minAmountOut Minimum HTK to receive
+     * @param maxHtkPriceD18 Maximum acceptable HTK price in 18d format (quote/htk)
      * @param deadline Swap deadline timestamp
      * @return burnedAmount Amount of HTK burned
      */
     function proposeBuybackAndBurn(
         address tokenIn,
-        bytes calldata path,
+        bytes calldata pathToQuote,
         uint256 amountIn,
+        uint256 minQuoteOut,
         uint256 minAmountOut,
-        uint256 expectedAmountOut,
+        uint256 maxHtkPriceD18,
         uint256 deadline
     ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
         address htkToken = TREASURY.HTK_TOKEN();
         emit TradeProposed(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
         );
-        require(path.length > 0, "Relay: Invalid path");
-        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut, expectedAmountOut);
+        if (tokenIn != TREASURY.QUOTE_TOKEN()) {
+            require(pathToQuote.length > 0, "Relay: Invalid path to quote");
+        }
+        ValidationResult memory vr = _validateTrade(tokenIn, htkToken, amountIn, minAmountOut, minAmountOut);
         if (!vr.isValid) {
             emit TradeValidationFailed(
                 msg.sender,
@@ -261,7 +266,9 @@ contract Relay is AccessControl, ReentrancyGuard {
             block.timestamp
         );
         lastTradeTimestamp = block.timestamp;
-        burnedAmount = TREASURY.executeBuybackAndBurn(tokenIn, path, amountIn, minAmountOut, deadline);
+        burnedAmount = TREASURY.executeBuybackAndBurn(
+            tokenIn, pathToQuote, amountIn, minQuoteOut, minAmountOut, maxHtkPriceD18, deadline
+        );
         emit TradeForwarded(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, burnedAmount, block.timestamp
         );
@@ -436,5 +443,32 @@ contract Relay is AccessControl, ReentrancyGuard {
             }
         }
         revert("Relay: validator not found");
+    }
+
+    function _extractPathEndpoints(bytes memory path) private pure returns (address start, address end) {
+        if (path.length == 0) {
+            return (address(0), address(0));
+        }
+
+        // fee-style path: token(20) + [fee(3) + token(20)]*
+        if (path.length >= 43 && (path.length - 20) % 23 == 0) {
+            start = _readAddress(path, 0);
+            uint256 tokenCount = 1 + (path.length - 20) / 23;
+            uint256 lastOffset = 23 * (tokenCount - 1);
+            end = _readAddress(path, lastOffset);
+            return (start, end);
+        }
+
+        address[] memory decoded = abi.decode(path, (address[]));
+        require(decoded.length >= 2, "Relay: Invalid path");
+        start = decoded[0];
+        end = decoded[decoded.length - 1];
+    }
+
+    function _readAddress(bytes memory data, uint256 start) private pure returns (address addr) {
+        require(data.length >= start + 20, "Relay: path read overflow");
+        assembly {
+            addr := shr(96, mload(add(add(data, 0x20), start)))
+        }
     }
 }

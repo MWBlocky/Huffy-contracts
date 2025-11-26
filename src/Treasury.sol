@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import {AccessControl} from "../lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {SafeERC20, IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Metadata} from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ReentrancyGuard} from "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {ISwapAdapter} from "./interfaces/ISwapAdapter.sol";
 
@@ -21,7 +22,11 @@ contract Treasury is AccessControl, ReentrancyGuard {
 
     // Immutable config
     address public immutable HTK_TOKEN;
+    address public immutable QUOTE_TOKEN; // e.g. USDC used for buybacks
+    uint24 public immutable quoteToHtkFee;
     ISwapAdapter public adapter;
+    address public whbarToken;
+    address public burnSink;
 
     // HTS precompile
     address private constant HTS = address(0x167);
@@ -45,19 +50,39 @@ contract Treasury is AccessControl, ReentrancyGuard {
     event Burned(uint256 amount, address indexed initiator, uint256 timestamp);
     event RelayUpdated(address indexed oldRelay, address indexed newRelay, uint256 timestamp);
     event AdapterUpdated(address indexed oldAdapter, address indexed newAdapter, uint256 timestamp);
+    event WhbarTokenUpdated(address indexed oldWhbar, address indexed newWhbar, uint256 timestamp);
+    event BurnSinkUpdated(address indexed oldSink, address indexed newSink, uint256 timestamp);
 
     // Association
     event TreasuryAssociated(address indexed token);
     event TreasuryBatchAssociated(uint256 count);
 
-    constructor(address _htkToken, address _adapter, address _admin, address _relay) {
+    constructor(
+        address _htkToken,
+        address _quoteToken,
+        uint24 _quoteToHtkFee,
+        address _adapter,
+        address _admin,
+        address _relay,
+        address _burnSink,
+        address _whbarToken
+    ) {
         require(_htkToken != address(0), "Treasury: Invalid HTK token");
+        require(_quoteToken != address(0), "Treasury: Invalid quote token");
+        require(_quoteToken != _htkToken, "Treasury: quote token equals HTK");
+        require(_quoteToHtkFee > 0, "Treasury: Invalid pool fee");
         require(_adapter != address(0), "Treasury: Invalid adapter");
         require(_admin != address(0), "Treasury: Invalid admin");
         require(_relay != address(0), "Treasury: Invalid relay");
+        require(_burnSink != address(0), "Treasury: Invalid burn sink");
+        require(_whbarToken != address(0), "Treasury: Invalid WHBAR");
 
         HTK_TOKEN = _htkToken;
+        QUOTE_TOKEN = _quoteToken;
+        quoteToHtkFee = _quoteToHtkFee;
         adapter = ISwapAdapter(_adapter);
+        burnSink = _burnSink;
+        whbarToken = _whbarToken;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(DAO_ROLE, _admin);
@@ -87,21 +112,113 @@ contract Treasury is AccessControl, ReentrancyGuard {
     // ------------ Buyback & burn (ExactTokensForTokens) ------------
 
     function executeBuybackAndBurn(
-        address tokenIn,
-        bytes calldata path,
+        address tokenToSell,
+        bytes calldata pathToQuote,
         uint256 amountIn,
-        uint256 amountOutMin,
+        uint256 minQuoteOut,
+        uint256 minHtkOut,
+        uint256 maxHtkPriceD18,
         uint256 deadline
-    ) external onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
-        require(tokenIn != address(0), "Treasury: Invalid token");
-        require(tokenIn != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
+    ) external payable onlyRole(RELAY_ROLE) nonReentrant returns (uint256 burnedAmount) {
+        address quote = QUOTE_TOKEN;
+        bool isHbar = tokenToSell == whbarToken;
+        require(tokenToSell != HTK_TOKEN, "Treasury: Cannot swap HTK for HTK");
         require(amountIn > 0, "Treasury: Zero amount");
+        require(minHtkOut > 0, "Treasury: Zero minOut");
         require(deadline >= block.timestamp, "Treasury: Expired deadline");
-        require(path.length > 0, "Treasury: Invalid path");
-        require(IERC20(tokenIn).balanceOf(address(this)) >= amountIn, "Treasury: Insufficient balance");
+        if (isHbar) {
+            require(address(this).balance >= amountIn, "Treasury: Insufficient balance");
+        } else {
+            require(IERC20(tokenToSell).balanceOf(address(this)) >= amountIn, "Treasury: Insufficient balance");
+        }
 
-        uint256 htkReceived = _buybackExact(tokenIn, path, amountIn, amountOutMin, deadline);
-        emit BuybackExecuted(tokenIn, amountIn, htkReceived, msg.sender, block.timestamp);
+        // Build quote->HTK path
+        bytes memory quoteToHtkPath = _encodeFeePath(quote, HTK_TOKEN, quoteToHtkFee);
+        (address quoteStart, address quoteEnd) = _extractPathEndpoints(quoteToHtkPath);
+        require(quoteStart == quote, "Treasury: quote path start mismatch");
+        require(quoteEnd == HTK_TOKEN, "Treasury: quote path end mismatch");
+
+        uint256 quoteAmount;
+        if (isHbar) {
+            require(pathToQuote.length > 0, "Treasury: Path required");
+            (address startHbar, address endHbar) = _extractPathEndpoints(pathToQuote);
+            require(startHbar == whbarToken, "Treasury: Path must start with WHBAR");
+            require(endHbar == quote, "Treasury: Path must end in quote");
+
+            ISwapAdapter.SwapRequest memory hbarToQuote = ISwapAdapter.SwapRequest({
+                kind: ISwapAdapter.SwapKind.ExactHBARForTokens,
+                tokenIn: address(0),
+                path: pathToQuote,
+                recipient: address(this),
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOut: 0,
+                amountInMaximum: amountIn,
+                amountOutMinimum: minQuoteOut
+            });
+
+            (, quoteAmount) = adapter.swap{value: amountIn}(hbarToQuote);
+            require(quoteAmount >= minQuoteOut, "Treasury: Insufficient quote out");
+        } else if (tokenToSell == quote) {
+            // direct quote -> HTK, optional pathToQuote ignored
+            quoteAmount = amountIn;
+        } else {
+            require(pathToQuote.length > 0, "Treasury: Path required");
+            (address start, address end) = _extractPathEndpoints(pathToQuote);
+            require(start == tokenToSell, "Treasury: Path start mismatch");
+            require(end == quote, "Treasury: Path must end in quote");
+
+            IERC20(tokenToSell).forceApprove(address(adapter), 0);
+            IERC20(tokenToSell).forceApprove(address(adapter), amountIn);
+
+            ISwapAdapter.SwapRequest memory toQuote = ISwapAdapter.SwapRequest({
+                kind: ISwapAdapter.SwapKind.ExactTokensForTokens,
+                tokenIn: tokenToSell,
+                path: pathToQuote,
+                recipient: address(this),
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOut: 0,
+                amountInMaximum: amountIn,
+                amountOutMinimum: minQuoteOut
+            });
+
+            (, quoteAmount) = adapter.swap(toQuote);
+            require(quoteAmount >= minQuoteOut, "Treasury: Insufficient quote out");
+        }
+
+        // Price guard (skip if maxHtkPriceD18 == type(uint256).max)
+        if (maxHtkPriceD18 != type(uint256).max) {
+            uint8 quoteDec = IERC20Metadata(quote).decimals();
+            uint8 htkDec = IERC20Metadata(HTK_TOKEN).decimals();
+            uint256 quote18 =
+                quoteDec <= 18 ? quoteAmount * (10 ** (18 - quoteDec)) : quoteAmount / (10 ** (quoteDec - 18));
+            uint256 htkMin18 = htkDec <= 18 ? minHtkOut * (10 ** (18 - htkDec)) : minHtkOut / (10 ** (htkDec - 18));
+            require(htkMin18 > 0, "Treasury: minOut underflow");
+            uint256 priceD18 = (quote18 * 1e18) / htkMin18;
+            require(priceD18 <= maxHtkPriceD18, "Treasury: HTK price too high");
+        }
+
+        // Swap quote -> HTK
+        IERC20(quote).forceApprove(address(adapter), 0);
+        IERC20(quote).forceApprove(address(adapter), quoteAmount);
+
+        ISwapAdapter.SwapRequest memory toHtk = ISwapAdapter.SwapRequest({
+            kind: ISwapAdapter.SwapKind.ExactTokensForTokens,
+            tokenIn: quote,
+            path: quoteToHtkPath,
+            recipient: address(this),
+            deadline: deadline,
+            amountIn: quoteAmount,
+            amountOut: 0,
+            amountInMaximum: quoteAmount,
+            amountOutMinimum: minHtkOut
+        });
+
+        (, uint256 htkReceived) = adapter.swap(toHtk);
+        require(htkReceived >= minHtkOut, "Treasury: Insufficient output");
+
+        emit BuybackExecuted(tokenToSell, amountIn, htkReceived, msg.sender, block.timestamp);
 
         burnedAmount = _burn(htkReceived);
         return burnedAmount;
@@ -276,41 +393,55 @@ contract Treasury is AccessControl, ReentrancyGuard {
         emit AdapterUpdated(old, newAdapter, block.timestamp);
     }
 
-    // ------------ Internal ------------
-
-    function _buybackExact(
-        address tokenIn,
-        bytes calldata path,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        uint256 deadline
-    ) private returns (uint256 htkReceived) {
-        IERC20(tokenIn).forceApprove(address(adapter), 0);
-        IERC20(tokenIn).forceApprove(address(adapter), amountIn);
-
-        ISwapAdapter.SwapRequest memory request = ISwapAdapter.SwapRequest({
-            kind: ISwapAdapter.SwapKind.ExactTokensForTokens,
-            tokenIn: tokenIn,
-            path: path,
-            recipient: address(this),
-            deadline: deadline,
-            amountIn: amountIn,
-            amountOut: 0,
-            amountInMaximum: amountIn,
-            amountOutMinimum: amountOutMin
-        });
-
-        (, htkReceived) = adapter.swap(request);
-        require(htkReceived >= amountOutMin, "Treasury: Insufficient output");
-        return htkReceived;
+    function setWhbarToken(address newWhbar) external onlyRole(DAO_ROLE) {
+        require(newWhbar != address(0), "Treasury: Invalid WHBAR");
+        address old = whbarToken;
+        require(newWhbar != old, "Treasury: Same WHBAR");
+        whbarToken = newWhbar;
+        emit WhbarTokenUpdated(old, newWhbar, block.timestamp);
     }
+
+    function setBurnSink(address newSink) external onlyRole(DAO_ROLE) {
+        require(newSink != address(0), "Treasury: Invalid burn sink");
+        address old = burnSink;
+        require(newSink != old, "Treasury: Same burn sink");
+        burnSink = newSink;
+        emit BurnSinkUpdated(old, newSink, block.timestamp);
+    }
+
+    // ------------ Internal ------------
 
     function _burn(uint256 amount) private returns (uint256) {
         require(amount > 0, "Treasury: Zero burn amount");
         // Reminder: native HTS burn typically requires a role. Here we send to a dead address instead
-        IERC20(HTK_TOKEN).safeTransfer(address(0xdead), amount);
+        IERC20(HTK_TOKEN).safeTransfer(burnSink, amount);
         emit Burned(amount, msg.sender, block.timestamp);
         return amount;
+    }
+
+    function _extractPathEndpoints(bytes memory path) private pure returns (address start, address end) {
+        if (path.length >= 43 && (path.length - 20) % 23 == 0) {
+            start = _readAddress(path, 0);
+            uint256 tokenCount = 1 + (path.length - 20) / 23;
+            uint256 lastOffset = 23 * (tokenCount - 1);
+            end = _readAddress(path, lastOffset);
+            return (start, end);
+        }
+        address[] memory decoded = abi.decode(path, (address[]));
+        require(decoded.length >= 2, "Treasury: Invalid path");
+        start = decoded[0];
+        end = decoded[decoded.length - 1];
+    }
+
+    function _encodeFeePath(address tokenA, address tokenB, uint24 fee) private pure returns (bytes memory data) {
+        data = abi.encodePacked(tokenA, fee, tokenB);
+    }
+
+    function _readAddress(bytes memory data, uint256 start) private pure returns (address addr) {
+        require(data.length >= start + 20, "Treasury: path read overflow");
+        assembly {
+            addr := shr(96, mload(add(add(data, 0x20), start)))
+        }
     }
 
     // ------------ Hedera HTS: association ------------

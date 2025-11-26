@@ -38,6 +38,7 @@ contract RelayTest is Test {
     uint256 constant MAX_TRADE_BPS = 1000; // 10%
     uint256 constant MAX_SLIPPAGE_BPS = 500; // 5%
     uint256 constant TRADE_COOLDOWN_SEC = 60; // 1 minute
+    uint24 constant QUOTE_FEE = 3000;
 
     // Events
     event TradeProposed(
@@ -152,7 +153,16 @@ contract RelayTest is Test {
         pairWhitelist = new PairWhitelist(dao);
 
         // Deploy Treasury
-        treasury = new Treasury(address(htkToken), address(swapAdapter), dao, address(this)); // temp relay
+        treasury = new Treasury(
+            address(htkToken),
+            address(usdcToken),
+            QUOTE_FEE,
+            address(swapAdapter),
+            dao,
+            address(this),
+            address(0xdead),
+            whbarToken
+        ); // temp relay
 
         // Deploy ParameterStore
         parameterStore = new ParameterStore(dao, MAX_TRADE_BPS, MAX_SLIPPAGE_BPS, TRADE_COOLDOWN_SEC);
@@ -543,10 +553,11 @@ contract RelayTest is Test {
         vm.prank(trader);
         (uint256 burnedAmount, bytes32[] memory reasonCodes) = relay.proposeBuybackAndBurn(
             address(usdcToken),
-            _encodePath(address(usdcToken), address(htkToken)),
+            bytes(""), // toQuote not needed when tokenIn == QUOTE
             amountIn,
+            0,
             minAmountOut,
-            minAmountOut,
+            type(uint256).max,
             block.timestamp + 1000
         );
 
@@ -557,12 +568,7 @@ contract RelayTest is Test {
     function test_RevertIf_BuybackPairNotWhitelisted() public {
         vm.prank(trader);
         (uint256 burnedAmount, bytes32[] memory reasonCodes) = relay.proposeBuybackAndBurn(
-            address(usdcToken),
-            _encodePath(address(usdcToken), address(htkToken)),
-            1000e6,
-            1900e6,
-            1900e6,
-            block.timestamp + 1000
+            address(usdcToken), bytes(""), 1000e6, 0, 1900e6, type(uint256).max, block.timestamp + 1000
         );
         assertEq(burnedAmount, 0);
         assertContains(reasonCodes, keccak256("PAIR_NOT_WHITELISTED"));

@@ -30,10 +30,11 @@ contract MockSwapAdapter is ISwapAdapter {
         }
         require(req.recipient != address(0), "Adapter: invalid recipient");
 
-        address[] memory decodedPath = abi.decode(req.path, (address[]));
-        require(decodedPath.length >= 2, "Adapter: invalid path");
-
-        address tokenOut = decodedPath[decodedPath.length - 1];
+        (address tokenInParsed, address tokenOut) = _decodePath(req.path);
+        require(req.tokenIn == tokenInParsed, "Adapter: tokenIn mismatch");
+        address[] memory decodedPath = new address[](2);
+        decodedPath[0] = tokenInParsed;
+        decodedPath[1] = tokenOut;
 
         IERC20(req.tokenIn).safeTransferFrom(msg.sender, address(this), req.amountIn);
         IERC20(req.tokenIn).approve(address(router), 0);
@@ -45,5 +46,26 @@ contract MockSwapAdapter is ISwapAdapter {
 
         amountInUsed = req.amountIn;
         amountOutReceived = outAfter - outBefore;
+    }
+
+    function _decodePath(bytes memory path) private pure returns (address tokenIn, address tokenOut) {
+        if (path.length >= 43 && (path.length - 20) % 23 == 0) {
+            tokenIn = _readAddress(path, 0);
+            uint256 tokenCount = 1 + (path.length - 20) / 23;
+            uint256 lastOffset = 23 * (tokenCount - 1);
+            tokenOut = _readAddress(path, lastOffset);
+            return (tokenIn, tokenOut);
+        }
+        address[] memory decoded = abi.decode(path, (address[]));
+        require(decoded.length >= 2, "Adapter: invalid path");
+        tokenIn = decoded[0];
+        tokenOut = decoded[decoded.length - 1];
+    }
+
+    function _readAddress(bytes memory data, uint256 start) private pure returns (address addr) {
+        require(data.length >= start + 20, "Adapter: path read overflow");
+        assembly {
+            addr := shr(96, mload(add(add(data, 0x20), start)))
+        }
     }
 }
