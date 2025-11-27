@@ -547,10 +547,10 @@ contract RelayTest is Test {
 
         vm.expectEmit(true, true, true, false);
         emit TradeProposed(
-            trader, Relay.TradeType.BUYBACK_AND_BURN, address(usdcToken), address(htkToken), amountIn, minAmountOut, 0
+            dao, Relay.TradeType.BUYBACK_AND_BURN, address(usdcToken), address(htkToken), amountIn, minAmountOut, 0
         );
 
-        vm.prank(trader);
+        vm.prank(dao);
         (uint256 burnedAmount, bytes32[] memory reasonCodes) = relay.proposeBuybackAndBurn(
             address(usdcToken),
             bytes(""), // toQuote not needed when tokenIn == QUOTE
@@ -566,7 +566,7 @@ contract RelayTest is Test {
     }
 
     function test_RevertIf_BuybackPairNotWhitelisted() public {
-        vm.prank(trader);
+        vm.prank(dao);
         (uint256 burnedAmount, bytes32[] memory reasonCodes) = relay.proposeBuybackAndBurn(
             address(usdcToken), bytes(""), 1000e6, 0, 1900e6, type(uint256).max, block.timestamp + 1000
         );

@@ -229,7 +229,7 @@ contract Relay is AccessControl, ReentrancyGuard {
         uint256 minAmountOut,
         uint256 maxHtkPriceD18,
         uint256 deadline
-    ) external onlyRole(TRADER_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
+    ) external onlyRole(DAO_ROLE) nonReentrant returns (uint256 burnedAmount, bytes32[] memory reasonCodes) {
         address htkToken = TREASURY.HTK_TOKEN();
         emit TradeProposed(
             msg.sender, TradeType.BUYBACK_AND_BURN, tokenIn, htkToken, amountIn, minAmountOut, block.timestamp
@@ -446,9 +446,7 @@ contract Relay is AccessControl, ReentrancyGuard {
     }
 
     function _extractPathEndpoints(bytes memory path) private pure returns (address start, address end) {
-        if (path.length == 0) {
-            return (address(0), address(0));
-        }
+        require(path.length > 0, "Relay: Invalid path");
 
         // fee-style path: token(20) + [fee(3) + token(20)]*
         if (path.length >= 43 && (path.length - 20) % 23 == 0) {
