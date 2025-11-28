@@ -11,6 +11,7 @@ import {PairWhitelistValidator} from "../src/validators/PairWhitelistValidator.s
 import {SlippageValidator} from "../src/validators/SlippageValidator.sol";
 import {Test} from "forge-std/Test.sol";
 import {TreasuryBalanceValidator} from "../src/validators/TreasuryBalanceValidator.sol";
+import {ISwapAdapter} from "../src/interfaces/ISwapAdapter.sol";
 
 interface IMockRouter {
     function setRate(uint256 r) external;
@@ -83,6 +84,8 @@ contract MockParameterStore {
 
 contract MockTreasury {
     address public immutable HTK_TOKEN = address(0x1234);
+    address public immutable QUOTE_TOKEN = address(0x5678);
+    address public burnSink = address(0xdead);
     mapping(address => uint256) public bal;
 
     function setBalance(address token, uint256 v) external {
@@ -93,11 +96,19 @@ contract MockTreasury {
         return bal[token];
     }
 
-    function executeSwap(address, address, bytes calldata, uint256, uint256, uint256) external pure returns (uint256) {
+    function executeSwap(ISwapAdapter.SwapKind, address, address, bytes calldata, uint256, uint256, uint256, uint256)
+        external
+        pure
+        returns (uint256)
+    {
         return 0;
     }
 
-    function executeBuybackAndBurn(address, bytes calldata, uint256, uint256, uint256) external pure returns (uint256) {
+    function executeBuybackAndBurn(address, bytes calldata, bytes calldata, uint256, uint256, uint256, uint256, uint256)
+        external
+        pure
+        returns (uint256)
+    {
         return 0;
     }
 }
