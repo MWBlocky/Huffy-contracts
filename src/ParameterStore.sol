@@ -7,6 +7,12 @@ pragma solidity ^0.8.20;
  * @dev Centralizes configuration to a single contract. Mutations are only allowed by the Timelock.
  */
 contract ParameterStore {
+    uint256 public constant MAX_BPS = 10_000;
+
+    error NotTimelock(address caller, address timelock);
+    error InvalidBps();
+    error ZeroAddress();
+
     address public immutable TIMELOCK;
 
     // Risk parameters (governance-controlled)
@@ -25,12 +31,8 @@ contract ParameterStore {
     );
 
     modifier onlyTimelock() {
-        _onlyTimelock();
+        if (msg.sender != TIMELOCK) revert NotTimelock(msg.sender, TIMELOCK);
         _;
-    }
-
-    function _onlyTimelock() internal view {
-        require(msg.sender == TIMELOCK, "ParameterStore: only Timelock");
     }
 
     /**
@@ -40,13 +42,13 @@ contract ParameterStore {
      * @param _maxSlippageBps Initial max slippage in basis points
      * @param _tradeCooldownSec Initial cooldown period in seconds
      */
+
     constructor(address _timelock, uint256 _maxTradeBps, uint256 _maxSlippageBps, uint256 _tradeCooldownSec) {
-        require(_timelock != address(0), "ParameterStore: invalid timelock");
-        require(_maxTradeBps <= 10000, "ParameterStore: invalid maxTradeBps");
-        require(_maxSlippageBps <= 10000, "ParameterStore: invalid maxSlippageBps");
+        if (_timelock == address(0)) revert ZeroAddress();
+        if (_maxTradeBps > MAX_BPS) revert InvalidBps();
+        if (_maxSlippageBps > MAX_BPS) revert InvalidBps();
 
         TIMELOCK = _timelock;
-
         maxTradeBps = _maxTradeBps;
         maxSlippageBps = _maxSlippageBps;
         tradeCooldownSec = _tradeCooldownSec;
@@ -80,8 +82,8 @@ contract ParameterStore {
     }
 
     function _setParameters(uint256 newMaxTradeBps, uint256 newMaxSlippageBps, uint256 newTradeCooldownSec) internal {
-        require(newMaxTradeBps <= 10000, "ParameterStore: invalid maxTradeBps");
-        require(newMaxSlippageBps <= 10000, "ParameterStore: invalid maxSlippageBps");
+        if (newMaxTradeBps > MAX_BPS) revert InvalidBps();
+        if (newMaxSlippageBps > MAX_BPS) revert InvalidBps();
 
         uint256 oldMaxTradeBps = maxTradeBps;
         uint256 oldMaxSlippageBps = maxSlippageBps;
