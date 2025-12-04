@@ -282,7 +282,7 @@ contract RelayTest is Test {
 
     function test_RevertIf_SetMaxTradeBpsInvalid() public {
         vm.prank(dao);
-        vm.expectRevert("ParameterStore: invalid maxTradeBps");
+        vm.expectRevert(ParameterStore.InvalidBps.selector);
         parameterStore.setMaxTradeBps(10001);
     }
 
